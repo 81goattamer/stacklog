@@ -1,0 +1,9 @@
+{
+  "name": "stacklog",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "start": "npx --yes http-server@14.1.1 -c-1 -a 127.0.0.1 -p 8080 ."
+  }
+}
