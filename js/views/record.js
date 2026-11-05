@@ -15,6 +15,12 @@ export function resetRecordView() {
   view = { ...HOME };
 }
 
+// 本棚の＋。記録中ならその画面に戻り、そうでなければ科目の選択から始める
+export function openRecord() {
+  if (!store.state.activeSession) view = { ...HOME };
+  goTab('record');
+}
+
 // 科目詳細の「記録する」（SHELF-32）。科目を決めた状態でモード選択へ進む
 export function recordFromSubject(subjectId) {
   closeAllSheets();
@@ -31,7 +37,7 @@ function go(step) {
 let rootEl = null;
 function rerender() {
   renderRecord(rootEl);
-  window.scrollTo(0, 0);
+  document.querySelector('#scroller').scrollTo(0, 0);
 }
 
 function stepHead(title, backTo) {
@@ -59,7 +65,7 @@ function stepSubject() {
     go('todo');
   };
   return [
-    stepHead(t('record.title')),
+    stepHead(t('record.title'), () => goTab('shelf')),
     h('p', { class: 'step-label' }, t('record.chooseSubject')),
     subjects.length
       ? h('div', { class: 'card list' }, subjects.map((s) => h('button', { type: 'button', class: 'list-row', onClick: () => pick(s.id) },
@@ -206,6 +212,7 @@ function stepManual() {
         }
         view = { ...HOME };
         store.addManualRecord(payload);
+        goTab('shelf');
         toast(t('record.saved'));
       },
     }, t('manual.done')),

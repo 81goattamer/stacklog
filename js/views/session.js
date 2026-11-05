@@ -55,6 +55,7 @@ async function confirmDiscard() {
   if (!ok) return;
   resetRecordView();
   store.discardSession();
+  goTab('shelf');
   toast(t('record.discarded'));
 }
 
@@ -206,6 +207,7 @@ function endScreen(a) {
       onClick: () => {
         resetRecordView();
         const r = store.saveSession();
+        if (r.ok) goTab('shelf');
         toast(r.ok ? t('record.saved') : t(r.error === 'startAt' ? 'error.startAt' : 'error.time'));
       },
     }, t('end.add')),

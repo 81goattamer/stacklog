@@ -3,11 +3,16 @@
 export const GRAY = '#8e8e93';
 export const GRAY_LIGHT = '#b4b4ba';
 
-// 科目・カテゴリの候補色（Q10）。ライト・ダークの両方で見分けやすい順に並べている
+// 科目・カテゴリの候補色（Q10）。彩度の高い14色を色相の順に並べている
 export const PALETTE = [
-  '#d6404a', '#0f9488', '#a88a00', '#3b63d9', '#d9701a', '#8b4fd1',
-  '#4f9a1f', '#c83fa8', '#1c8fd0', '#a5642a', '#dc5c82', '#2f7d4f',
+  '#ff1f3d', '#ff6a00', '#ffb300', '#ffe100', '#9be000', '#1fd135', '#00d09c',
+  '#00c8ea', '#0a84ff', '#2b3fff', '#7a2bff', '#b526ff', '#f01fd0', '#ff2d87',
 ];
+
+// 新しいカテゴリの初期の色。5つ飛ばしで選び、続けて作っても似た色が並ばないようにする
+export function defaultCategoryColor(count) {
+  return PALETTE[(count * 5) % PALETTE.length];
+}
 
 const HOUR = 3_600_000;
 const DAY_START_HOUR = 4;

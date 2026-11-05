@@ -1,7 +1,7 @@
 // 入力欄の部品
 import { fromLocalInput, PALETTE, toLocalInput } from './calc.js';
 import { t } from './i18n.js';
-import { h, icon } from './ui.js';
+import { h, icon, textOn } from './ui.js';
 
 export function field(label, ...control) {
   return h('div', { class: 'field' }, h('div', { class: 'field-label' }, label), ...control);
@@ -29,7 +29,7 @@ export function colorSwatches(value, onPick) {
   return h('div', { class: 'swatches', role: 'group' }, PALETTE.map((c) => h('button', {
     type: 'button',
     class: `swatch ${c === value ? 'on' : ''}`,
-    style: { background: c },
+    style: { background: c, color: textOn(c) },
     'aria-label': c,
     'aria-pressed': c === value ? 'true' : 'false',
     onClick: () => onPick(c),

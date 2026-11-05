@@ -1,6 +1,7 @@
 import { store } from './app-store.js';
 import { todoBadge } from './calc.js';
 import { detectLang, setLang, t } from './i18n.js';
+import { initKeyboard } from './keyboard.js';
 import { setNavHandler } from './nav.js';
 import { h, icon, refreshSheets, closeAllSheets, toast } from './ui.js';
 import { renderShelf } from './views/shelf.js';
@@ -10,12 +11,13 @@ import { renderTodos } from './views/todos.js';
 import { renderSettings } from './views/settings.js';
 import { clearTickers, openDraftDialog, sessionBanner, syncWakeLock, tickSession } from './views/session.js';
 
+// ナビの並びは左から 設定・todo・本棚・データ。記録の画面はナビに出さず、本棚の＋から開く
 const TABS = [
-  { id: 'shelf', icon: 'shelf', render: renderShelf },
-  { id: 'record', icon: 'timer', render: renderRecord },
-  { id: 'list', icon: 'calendar', render: renderList },
-  { id: 'todo', icon: 'checklist', render: renderTodos },
   { id: 'settings', icon: 'gear', render: renderSettings },
+  { id: 'todo', icon: 'checklist', render: renderTodos },
+  { id: 'shelf', icon: 'shelf', render: renderShelf },
+  { id: 'list', icon: 'calendar', render: renderList },
+  { id: 'record', render: renderRecord },
 ];
 
 let current = 'shelf';
@@ -28,6 +30,7 @@ try {
 
 const viewEl = document.querySelector('#view');
 const navEl = document.querySelector('#nav');
+const scroller = document.querySelector('#scroller');
 
 function goTab(id) {
   if (id === current) {
@@ -38,7 +41,7 @@ function goTab(id) {
   try { sessionStorage.setItem('stacklog:tab', current); } catch { /* 無視 */ }
   closeAllSheets();
   render();
-  window.scrollTo(0, 0);
+  scroller.scrollTo(0, 0);
 }
 setNavHandler(goTab);
 
@@ -50,12 +53,14 @@ function navBadge(tabId, badge) {
 
 function renderNav() {
   const badge = todoBadge(store.state.todos, Date.now());
-  navEl.replaceChildren(...TABS.map((tab) => h('button', {
+  // 記録の画面にいるときは、入口の本棚を選択中として見せる
+  const active = current === 'record' ? 'shelf' : current;
+  navEl.replaceChildren(...TABS.filter((tab) => tab.icon).map((tab) => h('button', {
     type: 'button',
-    class: `tab ${tab.id === current ? 'on' : ''}`,
-    'aria-current': tab.id === current ? 'page' : null,
+    class: `tab ${tab.id === active ? 'on' : ''}`,
+    'aria-current': tab.id === active ? 'page' : null,
     onClick: () => {
-      if (tab.id === current) window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (tab.id === current) scroller.scrollTo({ top: 0, behavior: 'smooth' });
       else goTab(tab.id);
     },
   }, h('span', { class: 'tab-icon' }, icon(tab.icon, { size: 24 }), navBadge(tab.id, badge)), h('span', {}, t(`tab.${tab.id}`)))));
@@ -80,7 +85,7 @@ function render() {
   const st = store.state.settings;
   setLang(st.language === 'auto' ? detectLang() : st.language);
   applyTheme(st.theme);
-  const y = window.scrollY;
+  const y = scroller.scrollTop;
   clearTickers();
   TABS.find((x) => x.id === current).render(viewEl);
   if (current !== 'record') {
@@ -88,7 +93,7 @@ function render() {
     if (banner) viewEl.prepend(banner);
   }
   renderNav();
-  window.scrollTo(0, y);
+  scroller.scrollTop = y;
   syncWakeLock();
 }
 
@@ -105,6 +110,7 @@ store.subscribe(() => {
 });
 
 store.repo.onError = () => toast(t('storage.error'));
+initKeyboard();
 
 // 起動時の復元（TECH-02）。記録中なら記録タブへ、終了画面のままなら下書きとして確認する
 const session = store.state.activeSession;

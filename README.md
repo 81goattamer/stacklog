@@ -44,6 +44,7 @@ ES モジュールと Service Worker を使うため、`index.html` をファイ
 | `js/todo-form.js` / `js/record-form.js` / `js/fields.js` | todo・記録の編集と入力欄の部品 |
 | `js/chart.js` | グラフ（SVG） |
 | `js/images.js` | アイコン画像の切り抜き・縮小 |
+| `js/keyboard.js` | キーボードを出しても画面全体がずれないようにする |
 | `js/i18n.js` | 日本語・英語の文言 |
 | `sw.js` | オフライン用のキャッシュ。ファイルを追加したら `FILES` に足し、変えたら `VERSION` を上げる |
 | `tools/make-icons.mjs` | アイコン PNG の生成 |

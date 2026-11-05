@@ -1,7 +1,7 @@
 import { store } from './app-store.js';
-import { GRAY, PALETTE, sortedCategories } from './calc.js';
+import { GRAY, defaultCategoryColor, sortedCategories } from './calc.js';
 import { t } from './i18n.js';
-import { h, icon, iconButton, actionMenu, blobUrl, bookMark, colorDot, confirmDialog, empty, formatDuration, openSheet, subjectCover, toast } from './ui.js';
+import { h, icon, iconButton, actionMenu, blobUrl, bookMark, colorDot, confirmDialog, formatDuration, openSheet, subjectCover, toast } from './ui.js';
 import { colorSwatches, field, selectField, seg } from './fields.js';
 import { pickImage } from './images.js';
 import { openTodoForm, todoListCard } from './todo-form.js';
@@ -10,9 +10,9 @@ import { recordFromSubject } from './views/record.js';
 
 // ---- 科目の追加・編集（POP-13） ----
 
-export function openSubjectForm(id = null) {
+export function openSubjectForm(id = null, { categoryId = null, onAdded = null } = {}) {
   const cur = id ? store.get('subjects', id) : null;
-  const f = { name: cur?.name ?? '', categoryId: cur?.categoryId ?? null, iconImage: cur?.iconImage ?? null, color: cur?.color ?? null };
+  const f = { name: cur?.name ?? '', categoryId: cur?.categoryId ?? categoryId, iconImage: cur?.iconImage ?? null, color: cur?.color ?? null };
   let err = '';
   const sheet = openSheet({
     title: t(id ? 'subject.edit' : 'subject.add'),
@@ -22,8 +22,10 @@ export function openSubjectForm(id = null) {
       const choose = () => pickImage((blob) => { f.iconImage = blob; sheet.refresh(); }, () => toast(t('subject.imageError')));
       const save = () => {
         const r = id ? store.updateSubject(id, colorField(f, cur)) : store.addSubject(f);
-        if (r.ok) sheet.close();
-        else {
+        if (r.ok) {
+          sheet.close();
+          if (!id) onAdded?.();
+        } else {
           err = t('common.required');
           sheet.refresh();
         }
@@ -69,13 +71,9 @@ function colorField(f, cur) {
 // ---- 科目詳細（SCR-14） ----
 
 export function openSubjectDetail(id) {
-  const sheet = openSheet({
+  openSheet({
     title: store.get('subjects', id)?.name,
     full: true,
-    headerRight: () => iconButton('more', t('common.menu'), () => actionMenu(store.get('subjects', id).name, [
-      { label: t('common.edit'), icon: 'edit', onClick: () => openSubjectForm(id) },
-      { label: t('common.delete'), icon: 'trash', danger: true, onClick: () => openSubjectDelete(id, () => sheet.close()) },
-    ])),
     render: (api) => {
       const s = store.get('subjects', id);
       if (!s) {
@@ -113,70 +111,24 @@ export function openSubjectDetail(id) {
 }
 
 // 削除方法の選択（DLG-15）
-export function openSubjectDelete(id, onDone = () => {}) {
+export function openSubjectDelete(id) {
   const s = store.get('subjects', id);
   actionMenu(t('subject.deleteTitle', { name: s.name }), [
-    {
-      label: t('subject.hide'),
-      desc: t('subject.hideDesc'),
-      icon: 'layers',
-      onClick: () => {
-        store.hideSubject(id);
-        onDone();
-      },
-    },
-    {
-      label: t('subject.purge'),
-      desc: t('subject.purgeDesc'),
-      icon: 'trash',
-      danger: true,
-      onClick: () => confirmPurge(id, onDone),
-    },
+    { label: t('subject.purge'), icon: 'trash', danger: true, onClick: () => confirmPurge(id) },
+    { label: t('subject.hide'), icon: 'layers', onClick: () => store.hideSubject(id) },
+    { label: t('common.cancel'), onClick: () => {} },
   ]);
 }
 
-async function confirmPurge(id, onDone = () => {}) {
-  const s = store.get('subjects', id);
-  if (await confirmDialog({ message: t('subject.purgeConfirm', { name: s.name }), okLabel: t('subject.purge'), danger: true })) {
-    onDone();
-    store.purgeSubject(id);
-  }
+export async function confirmPurge(id) {
+  if (await confirmDialog({ message: t('subject.purgeConfirm'), okLabel: t('common.delete'), danger: true })) store.purgeSubject(id);
 }
 
-// ---- カテゴリ管理（SCR-11, POP-12） ----
+// ---- カテゴリの追加・編集（POP-12） ----
 
-export function openCategoryManager() {
-  openSheet({
-    title: t('category.title'),
-    full: true,
-    headerRight: () => iconButton('plus', t('category.add'), () => openCategoryForm()),
-    render: () => {
-      const cats = sortedCategories(store.state);
-      const hidden = store.state.subjects.filter((s) => s.hiddenAt != null).sort((a, b) => b.hiddenAt - a.hiddenAt);
-      return h('div', {},
-        cats.length
-          ? h('div', { class: 'card list outlined' }, cats.map((c) => h('div', { class: 'manage-row' },
-            colorDot(c.themeColor),
-            h('button', { type: 'button', class: 'grow manage-name', onClick: () => openCategoryForm(c.id) }, c.name),
-            iconButton('trash', t('common.delete'), async () => {
-              if (await confirmDialog({ message: t('category.deleteConfirm', { name: c.name }), okLabel: t('common.delete'), danger: true })) store.deleteCategory(c.id);
-            }, 'danger'))))
-          : empty(t('category.empty'), 'tag'),
-        h('div', { class: 'section-head' }, h('h3', {}, t('category.hidden'))),
-        hidden.length
-          ? h('div', { class: 'card list outlined' }, hidden.map((s) => h('div', { class: 'manage-row' },
-            colorDot(s.color),
-            h('span', { class: 'grow manage-name' }, s.name),
-            h('button', { type: 'button', class: 'text-btn', onClick: () => store.restoreSubject(s.id) }, t('category.restore')),
-            iconButton('trash', t('subject.purge'), () => confirmPurge(s.id), 'danger'))))
-          : h('p', { class: 'muted small pad' }, t('category.hiddenEmpty')));
-    },
-  });
-}
-
-function openCategoryForm(id = null) {
+export function openCategoryForm(id = null) {
   const cur = id ? store.get('categories', id) : null;
-  const f = { name: cur?.name ?? '', themeColor: cur?.themeColor ?? PALETTE[store.state.categories.length % PALETTE.length] };
+  const f = { name: cur?.name ?? '', themeColor: cur?.themeColor ?? defaultCategoryColor(store.state.categories.length) };
   let err = '';
   const sheet = openSheet({
     title: t(id ? 'category.edit' : 'category.add'),
@@ -195,6 +147,16 @@ function openCategoryForm(id = null) {
             sheet.refresh();
           }
         },
-      }, t('common.save'))),
+      }, t('common.save')),
+      id ? h('button', {
+        type: 'button',
+        class: 'btn danger block',
+        onClick: async () => {
+          if (await confirmDialog({ message: t('category.deleteConfirm', { name: cur.name }), okLabel: t('common.delete'), danger: true })) {
+            sheet.close();
+            store.deleteCategory(id);
+          }
+        },
+      }, t('common.delete')) : null),
   });
 }

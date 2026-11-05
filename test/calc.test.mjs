@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  GRAY, addDays, calendarColors, categoryShares, computeSession, dayDiff, dayKey, examStudySeconds, isDateKey, overdueDays,
+  GRAY, PALETTE, addDays, calendarColors, categoryShares, computeSession, dayDiff, dayKey, defaultCategoryColor, examStudySeconds, isDateKey, overdueDays,
   periodRange, sortTodos, streak, studySeries, timeAxisMax, todoBadge, visibleTodos, weekStartKey,
 } from '../js/calc.js';
 
@@ -9,6 +9,12 @@ const at = (s) => new Date(s).getTime();
 const MIN = 60_000;
 const HOUR = 60 * MIN;
 const rec = (day, sec, subjectId = null, startAt = at(`${day}T12:00:00`)) => ({ dayKey: day, studySeconds: sec, subjectId, startAt });
+
+test('palette has 14 distinct colors and defaults go through all of them', () => {
+  assert.equal(new Set(PALETTE).size, 14);
+  assert.equal(new Set(PALETTE.map((_, i) => defaultCategoryColor(i))).size, 14);
+  assert.equal(defaultCategoryColor(14), defaultCategoryColor(0));
+});
 
 test('dayKey switches at 4am', () => {
   assert.equal(dayKey(at('2026-11-04T03:59:00')), '2026-11-03');
