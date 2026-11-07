@@ -5,6 +5,7 @@ import { t } from '../i18n.js';
 import { h, icon, iconButton, colorDot, empty, subjectCover } from '../ui.js';
 import { seg } from '../fields.js';
 import { confirmPurge, openCategoryForm, openSubjectDelete, openSubjectDetail, openSubjectForm } from '../subject.js';
+import { settingsButton } from '../nav.js';
 import { openRecord } from './record.js';
 
 const view = { status: 'studying', editing: false };
@@ -58,18 +59,27 @@ function groupHead(g) {
   }
   // 編集中は名前を2倍の大きさにする。カテゴリなしは押せない
   if (!g.id) return h('h2', { class: 'group-label with-dot big' }, g.name);
-  return h('h2', { class: 'group-label big' },
+  return h('h2', { class: 'group-label big category-head' },
     h('button', {
       type: 'button',
       class: 'with-dot category-btn',
       onClick: () => openCategoryForm(g.id),
-    }, colorDot(g.color), g.name, icon('edit', { size: 18 })));
+    }, colorDot(g.color), g.name, icon('edit', { size: 18 })),
+    h('span', { class: 'move-btns' },
+      moveButton(g, -1, 'up', t('category.moveUp')),
+      moveButton(g, 1, 'down', t('category.moveDown'))));
+}
+
+function moveButton(g, step, iconName, label) {
+  const btn = iconButton(iconName, `${label}: ${g.name}`, () => store.moveCategory(g.id, step), 'move-btn');
+  btn.disabled = step < 0 ? g.first : g.last;
+  return btn;
 }
 
 // カテゴリの順に並べ、カテゴリなしは最後。編集中は科目がないカテゴリも出す
 function shelfGroups(subjects) {
   const groups = [
-    ...sortedCategories(store.state).map((c) => ({ id: c.id, name: c.name, color: c.themeColor })),
+    ...sortedCategories(store.state).map((c, i, all) => ({ id: c.id, name: c.name, color: c.themeColor, first: i === 0, last: i === all.length - 1 })),
     { id: null, name: t('category.none') },
   ];
   return groups.map((g) => {
@@ -98,7 +108,7 @@ export function renderShelf(root) {
   const subjects = visibleSubjects(store.state, view.status);
   const show = subjects.length || view.editing;
   root.replaceChildren(
-    h('header', { class: 'page-head' }, h('h1', {}, t('shelf.title'))),
+    h('header', { class: 'page-head' }, h('h1', {}, t('shelf.title')), settingsButton()),
     seg(['waiting', 'studying', 'finished'].map((v) => [v, t(`status.${v}`)]), view.status, (v) => {
       view.status = v;
       rerender();
@@ -122,5 +132,5 @@ export function renderShelf(root) {
       'aria-label': t('shelf.record'),
       title: t('shelf.record'),
       onClick: openRecord,
-    }, icon('plus', { size: 28 })));
+    }, icon('timer', { size: 28 })));
 }

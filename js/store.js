@@ -1,5 +1,5 @@
 // Stacklog のデータ層。DOMに依存しないので Node からもテストできる。
-import { GRAY, computeSession, dayKey, isDateKey, sortedSubjects } from './calc.js';
+import { GRAY, computeSession, dayKey, isDateKey, sortedCategories, sortedSubjects } from './calc.js';
 
 export const SCHEMA_VERSION = 1;
 export const TABLES = ['categories', 'subjects', 'todos', 'records', 'exams', 'milestones', 'examAttempts'];
@@ -309,6 +309,22 @@ export class Store {
     }
     this.commit();
     return { ok: true, id };
+  }
+
+  // 並べ替え。step は -1（上へ）か 1（下へ）。端なら何もしない
+  moveCategory(id, step) {
+    const list = sortedCategories(this.state);
+    const i = list.findIndex((c) => c.id === id);
+    const j = i + step;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    list.forEach((c, k) => {
+      if (c.sortOrder !== k) {
+        c.sortOrder = k;
+        this.put('categories', c);
+      }
+    });
+    this.commit();
   }
 
   deleteCategory(id) {

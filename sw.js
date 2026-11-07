@@ -1,5 +1,5 @@
 // オフラインで動くよう、アプリ本体をキャッシュする。ファイルを変えたら VERSION を上げる
-const VERSION = 'stacklog-v2';
+const VERSION = 'stacklog-v4';
 const FILES = [
   './',
   './index.html',

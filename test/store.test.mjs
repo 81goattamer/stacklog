@@ -55,6 +55,22 @@ test('reset color follows the category again (Q12)', () => {
   assert.equal(st.get('subjects', s).colorCustomized, false);
 });
 
+test('categories can be moved up and down, ends are ignored', () => {
+  const { st } = setup();
+  const [a, b, c] = ['A', 'B', 'C'].map((name) => st.addCategory({ name, themeColor: PALETTE[0] }).id);
+  const order = () => [...st.state.categories].sort((x, y) => x.sortOrder - y.sortOrder).map((x) => x.name).join('');
+  st.moveCategory(c, -1);
+  assert.equal(order(), 'ACB');
+  st.moveCategory(a, 1);
+  assert.equal(order(), 'CAB');
+  st.moveCategory(c, -1);
+  st.moveCategory(b, 1);
+  assert.equal(order(), 'CAB');
+  st.deleteCategory(a);
+  st.moveCategory(b, -1);
+  assert.equal(order(), 'BC');
+});
+
 test('deleting a category moves subjects to no category and keeps their color', () => {
   const { st } = setup();
   const c = st.addCategory({ name: '1', themeColor: PALETTE[0] }).id;

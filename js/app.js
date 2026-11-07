@@ -11,13 +11,13 @@ import { renderTodos } from './views/todos.js';
 import { renderSettings } from './views/settings.js';
 import { clearTickers, openDraftDialog, sessionBanner, syncWakeLock, tickSession } from './views/session.js';
 
-// ナビの並びは左から 設定・todo・本棚・データ。記録の画面はナビに出さず、本棚の＋から開く
+// ナビの並びは左から todo・本棚・データ。記録は本棚の記録ボタン、設定は各画面の右上の歯車から開く
 const TABS = [
-  { id: 'settings', icon: 'gear', render: renderSettings },
   { id: 'todo', icon: 'checklist', render: renderTodos },
   { id: 'shelf', icon: 'shelf', render: renderShelf },
   { id: 'list', icon: 'calendar', render: renderList },
   { id: 'record', render: renderRecord },
+  { id: 'settings', render: renderSettings },
 ];
 
 let current = 'shelf';
@@ -32,18 +32,22 @@ const viewEl = document.querySelector('#view');
 const navEl = document.querySelector('#nav');
 const scroller = document.querySelector('#scroller');
 
+// 設定を閉じたときに戻る画面
+let returnTo = 'shelf';
+
 function goTab(id) {
   if (id === current) {
     render();
     return;
   }
+  if (id === 'settings') returnTo = current === 'record' ? 'shelf' : current;
   current = id;
   try { sessionStorage.setItem('stacklog:tab', current); } catch { /* 無視 */ }
   closeAllSheets();
   render();
   scroller.scrollTo(0, 0);
 }
-setNavHandler(goTab);
+setNavHandler(goTab, () => goTab(returnTo));
 
 function navBadge(tabId, badge) {
   if (tabId !== 'todo') return null;
@@ -53,8 +57,8 @@ function navBadge(tabId, badge) {
 
 function renderNav() {
   const badge = todoBadge(store.state.todos, Date.now());
-  // 記録の画面にいるときは、入口の本棚を選択中として見せる
-  const active = current === 'record' ? 'shelf' : current;
+  // 記録・設定の画面にいるときは、開いた元の画面を選択中として見せる
+  const active = current === 'record' ? 'shelf' : current === 'settings' ? returnTo : current;
   navEl.replaceChildren(...TABS.filter((tab) => tab.icon).map((tab) => h('button', {
     type: 'button',
     class: `tab ${tab.id === active ? 'on' : ''}`,

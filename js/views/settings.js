@@ -1,8 +1,9 @@
 import { store } from '../app-store.js';
 import { recordsCsv } from '../store.js';
 import { t } from '../i18n.js';
-import { h, icon, confirmDialog, downloadFile, formatDateTime, openSheet, toast } from '../ui.js';
+import { h, icon, iconButton, confirmDialog, downloadFile, formatDateTime, openSheet, toast } from '../ui.js';
 import { seg } from '../fields.js';
+import { goBack } from '../nav.js';
 
 function group(title, ...rows) {
   return h('section', { class: 'group' },
@@ -38,7 +39,9 @@ export function renderSettings(root) {
     },
   });
   root.replaceChildren(
-    h('header', { class: 'page-head' }, h('h1', {}, t('settings.title'))),
+    h('header', { class: 'page-head' },
+      iconButton('back', t('common.back'), goBack),
+      h('h1', { class: 'sub-title' }, t('settings.title'))),
     group(t('settings.general'),
       row('globe', t('settings.lang'), seg([['auto', t('settings.auto')], ['ja', '日本語'], ['en', 'English']], st.language, (v) => store.setSettings({ language: v }), 'small')),
       row('moon', t('settings.theme'), seg([['auto', t('settings.auto')], ['light', t('settings.light')], ['dark', t('settings.dark')]], st.theme, (v) => store.setSettings({ theme: v }), 'small'))),

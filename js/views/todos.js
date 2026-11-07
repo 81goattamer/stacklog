@@ -1,8 +1,9 @@
 import { store } from '../app-store.js';
 import { sortTodos, sortedCategories, visibleTodos } from '../calc.js';
 import { t } from '../i18n.js';
-import { h, colorDot, empty, iconButton } from '../ui.js';
+import { h, icon, colorDot, empty } from '../ui.js';
 import { openTodoForm, todoRow } from '../todo-form.js';
+import { settingsButton } from '../nav.js';
 
 const view = { sort: 'due', showOpen: true, showDone: false };
 const SORTS = [['due', 'todo.sortDue'], ['category', 'todo.sortCategory'], ['newest', 'todo.sortNewest'], ['oldest', 'todo.sortOldest']];
@@ -41,9 +42,7 @@ export function renderTodos(root) {
     onClick: () => { onClick(); renderTodos(root); },
   }, label);
   root.replaceChildren(
-    h('header', { class: 'page-head' },
-      h('h1', {}, t('todo.title')),
-      iconButton('plus', t('todo.add'), () => openTodoForm(), 'accent')),
+    h('header', { class: 'page-head' }, h('h1', {}, t('todo.title')), settingsButton()),
     h('div', { class: 'sort-bar' }, SORTS.map(([key, label]) => chip(t(label), view.sort === key, () => { view.sort = key; }))),
     h('div', { class: 'sort-bar filter' },
       chip(t('todo.filterOpen'), view.showOpen, () => { view.showOpen = !view.showOpen; }),
@@ -52,5 +51,14 @@ export function renderTodos(root) {
       ? empty(t('todo.empty'), 'checklist')
       : view.sort === 'category'
         ? h('div', {}, grouped(rows))
-        : h('div', { class: 'card list' }, rows.map(rowOf)));
+        : h('div', { class: 'card list' }, rows.map(rowOf)),
+    h('div', { class: 'fab-space' }),
+    // 追加ボタンは本棚の記録ボタンと同じ右下に置く
+    h('button', {
+      type: 'button',
+      class: 'fab',
+      'aria-label': t('todo.add'),
+      title: t('todo.add'),
+      onClick: () => openTodoForm(),
+    }, icon('plus', { size: 28 })));
 }

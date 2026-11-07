@@ -8,6 +8,7 @@ import { seg } from '../fields.js';
 import { barChart, donutChart } from '../chart.js';
 import { recordRow } from '../record-form.js';
 import { attemptResult, attemptsOf, openExamDetail, openExamForm, openMilestoneList } from '../exam.js';
+import { settingsButton } from '../nav.js';
 
 const view = { tab: 'calendar', calOffset: 0, period: 'week', offset: 0, timeline: 50 };
 let rootEl = null;
@@ -17,7 +18,7 @@ export function renderList(root) {
   rootEl = root;
   const body = { calendar: calendarTab, data: dataTab, exams: examsTab }[view.tab]();
   root.replaceChildren(
-    h('header', { class: 'page-head' }, h('h1', {}, t('list.title'))),
+    h('header', { class: 'page-head' }, h('h1', {}, t('list.title')), settingsButton()),
     streakBanner(),
     seg([['calendar', t('list.calendar')], ['data', t('list.data')], ['exams', t('list.exams')]], view.tab, (v) => {
       view.tab = v;

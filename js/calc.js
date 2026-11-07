@@ -169,7 +169,7 @@ export function categoryShares(state, { from, to } = {}) {
     sum.set(key, (sum.get(key) ?? 0) + r.studySeconds);
   }
   const rows = [];
-  for (const c of state.categories) if (sum.get(c.id)) rows.push({ key: c.id, name: c.name, color: c.themeColor, seconds: sum.get(c.id) });
+  for (const c of sortedCategories(state)) if (sum.get(c.id)) rows.push({ key: c.id, name: c.name, color: c.themeColor, seconds: sum.get(c.id) });
   if (sum.get('none')) rows.push({ key: 'none', color: GRAY, seconds: sum.get('none') });
   if (sum.get('unset')) rows.push({ key: 'unset', color: GRAY_LIGHT, seconds: sum.get('unset') });
   return rows;
