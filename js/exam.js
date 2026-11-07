@@ -2,7 +2,8 @@ import { store } from './app-store.js';
 import { dayDiff, examStudySeconds } from './calc.js';
 import { uid, visibleSubjects } from './store.js';
 import { t } from './i18n.js';
-import { h, icon, iconButton, actionMenu, colorDot, confirmDialog, empty, formatDate, formatDuration, openSheet, todayKey } from './ui.js';
+import { h, icon, iconButton, actionMenu, blobUrl, colorDot, confirmDialog, empty, formatDate, formatDuration, openSheet, toast, todayKey } from './ui.js';
+import { pickImage } from './images.js';
 import { checkList, dateField, field, parseNumber, seg, switchRow, toggled } from './fields.js';
 import { lineChart } from './chart.js';
 
@@ -15,14 +16,32 @@ export function attemptsOf(examId) {
 }
 
 // 受験記録の結果の短い表示
-export function attemptResult(exam, a) {
+// empty: 結果が未登録のときの表示（null なら何も出さない）
+export function attemptResult(exam, a, { empty = t('exam.pending') } = {}) {
   const parts = [];
   if (exam.hasScore && a.totalScore != null) parts.push(exam.maxScore != null ? `${a.totalScore} / ${exam.maxScore}` : String(a.totalScore));
   if (exam.hasPassFail && a.passed != null) parts.push(t(a.passed ? 'exam.pass' : 'exam.fail'));
-  return parts.length ? parts.join(' · ') : t('exam.pending');
+  return parts.length ? parts.join(' · ') : empty;
 }
 
 // ---- 試験の作成・編集（POP-35） ----
+
+// 試験のアイコン。画像がなければ試験のマークを出す
+export function examIcon(exam, cls = '') {
+  return h('div', { class: `exam-icon ${cls}` },
+    exam.iconImage ? h('img', { src: blobUrl(exam.iconImage), alt: '', draggable: 'false' }) : icon('file', { size: 22 }));
+}
+
+// 正方形のアイコン画像を選ぶ欄
+function iconPicker(blob, onChange) {
+  const choose = () => pickImage(onChange, () => toast(t('subject.imageError')), 1);
+  return h('div', { class: 'icon-field' },
+    h('button', { type: 'button', class: 'cover-btn', 'aria-label': t('subject.imageChoose'), onClick: choose },
+      examIcon({ iconImage: blob }, 'exam-icon-edit')),
+    h('div', { class: 'icon-actions' },
+      h('button', { type: 'button', class: 'text-btn', onClick: choose }, t(blob ? 'subject.imageChange' : 'subject.imageChoose')),
+      blob ? h('button', { type: 'button', class: 'text-btn danger-text', onClick: () => onChange(null) }, t('subject.imageRemove')) : null));
+}
 
 export function openExamForm(id = null) {
   const cur = id ? store.get('exams', id) : null;
@@ -35,11 +54,22 @@ export function openExamForm(id = null) {
     hasPassFail: cur?.hasPassFail ?? false,
     subjectIds: [...(cur?.subjectIds ?? [])],
     milestones: id ? milestonesOf(id).map((m) => ({ id: m.id, content: m.content })) : [],
+    favorite: cur?.favorite ?? false,
+    iconImage: cur?.iconImage ?? null,
   };
   let err = '';
   const sheet = openSheet({
     title: t(id ? 'exam.edit' : 'exam.add'),
     full: true,
+    // 右上の星で大事な試験にする（保存したときに反映）
+    headerRight: (api) => h('button', {
+      type: 'button',
+      class: `icon-btn fav ${f.favorite ? 'on' : ''}`,
+      'aria-label': t('exam.favorite'),
+      'aria-pressed': f.favorite ? 'true' : 'false',
+      title: t('exam.favorite'),
+      onClick: () => { f.favorite = !f.favorite; api.refreshHead(); },
+    }, icon('star', { fill: f.favorite })),
     render: () => {
       const subjects = visibleSubjects(store.state);
       for (const sid of f.subjectIds) {
@@ -62,6 +92,7 @@ export function openExamForm(id = null) {
       };
       return h('div', { class: 'form' },
         field(t('exam.name'), h('input', { class: 'input', value: f.name, placeholder: t('exam.namePlaceholder'), onInput: (e) => { f.name = e.target.value; } })),
+        field(t('field.icon'), iconPicker(f.iconImage, (blob) => { f.iconImage = blob; sheet.refresh(); })),
         switchRow(t('exam.hasScore'), f.hasScore, (v) => {
           f.hasScore = v;
           if (!v) f.hasPassFail = true;

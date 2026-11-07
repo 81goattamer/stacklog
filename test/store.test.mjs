@@ -364,3 +364,17 @@ test('memo is kept from the end screen, editable, exported and repaired', async 
   const csv = recordsCsv(st.state, { header: ['h'], modeLabel: (m) => m, formatStart: () => '' });
   assert.ok(csv.includes('書き直し'));
 });
+
+test('exam favorite and square icon are saved and survive a backup', async () => {
+  const { st } = setup();
+  const icon = dataUrlToBlob('data:image/png;base64,iVBORw0KGgo=');
+  const id = st.saveExam({ name: 'TOEIC', hasScore: true, favorite: true, iconImage: icon }).id;
+  assert.equal(st.get('exams', id).favorite, true);
+  assert.equal(st.get('exams', id).iconImage.size, icon.size);
+  const data = st.parseBackup(JSON.stringify(await st.exportData()));
+  assert.equal(data.exams[0].favorite, true);
+  assert.equal(data.exams[0].iconImage.type, 'image/png');
+  st.saveExam({ id, name: 'TOEIC', hasScore: true, favorite: false, iconImage: null });
+  assert.equal(st.get('exams', id).favorite, false);
+  assert.equal(st.get('exams', id).iconImage, null);
+});

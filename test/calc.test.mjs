@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  GRAY, PALETTE, addDays, calendarColors, categoryShares, computeSession, dayDiff, dayKey, defaultCategoryColor, examStudySeconds, isDateKey, overdueDays,
+  GRAY, PALETTE, addDays, calendarColors, categoryShares, computeSession, dayDiff, dayKey, defaultCategoryColor, examSchedule, examStudySeconds, isDateKey, overdueDays,
   periodRange, sortTodos, streak, studySeries, studyShareText, timeAxisMax, todoBadge, visibleTodos, weekStartKey,
 } from '../js/calc.js';
 
@@ -229,4 +229,14 @@ test('share text follows the requested format', () => {
   assert.equal(text, '勉強記録\n科目　微分積分学\n開始時刻　17:23\n勉強時間　00:48\n斉次方程式の解き方をパターン別で勉強した。');
   const noMemo = studyShareText({ subject: '英語', startAt: at('2026-11-04T09:05:00'), studySeconds: 125 * 60, memo: '  ' }, L);
   assert.equal(noMemo, '勉強記録\n科目　英語\n開始時刻　09:05\n勉強時間　02:05');
+});
+
+test('exam schedule: next is today or later, last is before today', () => {
+  const a = (date) => ({ date });
+  const list = [a('2026-10-01'), a('2026-12-01'), a('2026-11-04'), a('2026-10-20')];
+  const { next, last } = examSchedule(list, '2026-11-04');
+  assert.equal(next.date, '2026-11-04');
+  assert.equal(last.date, '2026-10-20');
+  assert.deepEqual(examSchedule([], '2026-11-04'), { next: null, last: null });
+  assert.equal(examSchedule([a('2026-01-01')], '2026-11-04').next, null);
 });

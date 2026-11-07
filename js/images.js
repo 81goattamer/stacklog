@@ -1,6 +1,6 @@
-// 科目のアイコン画像。B4 の比率（1:√2）で中央を切り抜き、縮小してから保存する（SHELF-03）
+// アイコン画像。中央を切り抜き、縮小してから保存する。
+// 比率（縦÷横）は、科目は B4 の 1:√2（SHELF-03）、試験は正方形の 1
 const WIDTH = 360;
-const RATIO = Math.SQRT2;
 
 async function decode(file) {
   if ('createImageBitmap' in window) {
@@ -22,7 +22,8 @@ async function decode(file) {
 }
 
 // 写真を選ばせ、切り抜いた JPEG の Blob を渡す。キャンセル時は何もしない
-export function pickImage(onPicked, onError) {
+export function pickImage(onPicked, onError, ratio = Math.SQRT2) {
+  const RATIO = ratio;
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';

@@ -125,6 +125,8 @@ export function sanitize(raw) {
           .map((c) => ({ id: c.id, name: str(c.name).trim(), maxScore: isCount(c.maxScore) ? c.maxScore : 0 }))
         : [],
       hasPassFail: !hasScore || !!x.hasPassFail,
+      favorite: !!x.favorite,
+      iconImage: x.iconImage instanceof Blob ? x.iconImage : null,
       subjectIds: [...new Set(arr(x.subjectIds).filter((id) => has('subjects', id)))],
       ...common(x, i),
     });
@@ -674,6 +676,8 @@ export class Store {
       sections,
       hasPassFail: !hasScore || !!f.hasPassFail,
       subjectIds: [...new Set((f.subjectIds ?? []).filter((id) => this.get('subjects', id)))],
+      favorite: !!f.favorite,
+      iconImage: f.iconImage instanceof Blob ? f.iconImage : null,
     };
     let exam = f.id ? this.get('exams', f.id) : null;
     if (exam) {
@@ -812,7 +816,7 @@ export class Store {
   async exportData() {
     const data = structuredClone({ ...this.state });
     delete data.activeSession;
-    for (const s of data.subjects) s.iconImage = s.iconImage ? await blobToDataUrl(s.iconImage) : null;
+    for (const x of [...data.subjects, ...data.exams]) x.iconImage = x.iconImage ? await blobToDataUrl(x.iconImage) : null;
     return { app: 'Stacklog', schemaVersion: SCHEMA_VERSION, exportedAt: new Date(this.now()).toISOString(), data };
   }
 
@@ -822,8 +826,8 @@ export class Store {
     if (obj?.app !== 'Stacklog' || typeof obj.schemaVersion !== 'number') throw new Error('format');
     if (obj.schemaVersion > SCHEMA_VERSION) throw new Error('newer');
     const raw = obj.data ?? {};
-    const subjects = (Array.isArray(raw.subjects) ? raw.subjects : []).map((s) => ({ ...s, iconImage: dataUrlToBlob(s?.iconImage) }));
-    return sanitize({ ...raw, subjects });
+    const withIcons = (list) => (Array.isArray(list) ? list : []).map((x) => ({ ...x, iconImage: dataUrlToBlob(x?.iconImage) }));
+    return sanitize({ ...raw, subjects: withIcons(raw.subjects), exams: withIcons(raw.exams) });
   }
 
   importOverwrite(data) {

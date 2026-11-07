@@ -175,6 +175,18 @@ export function categoryShares(state, { from, to } = {}) {
   return rows;
 }
 
+// 次回（今日以降で一番近い）と前回（昨日以前で一番新しい）の受験記録。today は "YYYY-MM-DD"
+export function examSchedule(attempts, today) {
+  let next = null;
+  let last = null;
+  for (const a of attempts) {
+    if (a.date >= today) {
+      if (!next || a.date < next.date) next = a;
+    } else if (!last || a.date > last.date) last = a;
+  }
+  return { next, last };
+}
+
 export function examStudySeconds(state, exam) {
   const ids = new Set(exam.subjectIds);
   let sum = 0;
