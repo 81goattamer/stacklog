@@ -51,7 +51,7 @@ export function renderSettings(root) {
     group(t('settings.data'),
       navRow('download', t('settings.backup'), openBackup)),
     h('p', { class: 'muted small pad' }, t('settings.storageNote')),
-    h('p', { class: 'muted small center' }, 'Stacklog v1.0'));
+    h('p', { class: 'muted small center' }, `Stacklog v${self.APP_VERSION}`));
 }
 
 // ---- バックアップと復元（SCR-51） ----

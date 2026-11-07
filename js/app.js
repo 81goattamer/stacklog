@@ -133,11 +133,28 @@ setInterval(() => {
   if (document.visibilityState === 'visible') renderNav();
 }, 60_000);
 
-// 画面に戻ったら、時刻の差から計算し直す（TECH-01）
+// 新しい版の確認。公開中の version.js と、今動いている版を比べる
+async function checkUpdate() {
+  if (location.protocol === 'file:' || document.querySelector('.update-bar')) return;
+  try {
+    const res = await fetch(`./version.js?t=${Date.now()}`, { cache: 'no-store' });
+    const latest = /APP_VERSION\s*=\s*'([^']+)'/.exec(await res.text())?.[1];
+    if (res.ok && latest && latest !== self.APP_VERSION) {
+      document.body.append(h('button', { type: 'button', class: 'update-bar', onClick: () => location.reload() },
+        icon('download', { size: 18 }), t('update.available')));
+    }
+  } catch {
+    // オフラインなら何もしない
+  }
+}
+checkUpdate();
+
+// 画面に戻ったら、時刻の差から計算し直す（TECH-01）。新しい版も確かめる
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     store.syncSession();
     render();
+    checkUpdate();
   } else {
     syncWakeLock();
   }

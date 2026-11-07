@@ -1,8 +1,10 @@
-// オフラインで動くよう、アプリ本体をキャッシュする。ファイルを変えたら VERSION を上げる
-const VERSION = 'stacklog-v4';
+// オフラインで動くよう、アプリ本体をキャッシュする。ファイルを変えたら version.js の版を上げる
+importScripts('./version.js');
+const VERSION = `stacklog-v${self.APP_VERSION}`;
 const FILES = [
   './',
   './index.html',
+  './version.js',
   './manifest.webmanifest',
   './css/style.css',
   './icons/icon.svg',
@@ -43,11 +45,12 @@ self.addEventListener('activate', (e) => {
     .then(() => self.clients.claim()));
 });
 
-// ネットワークを優先し、つながらないときはキャッシュを使う
+// ネットワークを優先し、つながらないときはキャッシュを使う。
+// ブラウザが一時保存したファイル（GitHub Pages は10分）を使わず、毎回サーバーに新しいかを確かめる
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: 'no-cache' })
       .then((res) => {
         // 正常に取得できた自サイトのファイルだけを保存する（エラーページは残さない）
         if (res.ok && res.type === 'basic') {

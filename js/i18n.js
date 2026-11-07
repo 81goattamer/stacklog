@@ -243,6 +243,7 @@ const dict = {
     'backup.error': 'ファイルを読み込めませんでした。データは変更していません。',
     'backup.newer': '新しい版のアプリで作られたファイルなので読み込めません。',
     'storage.error': 'データを保存できませんでした。端末の空き容量を確認してください。',
+    'update.available': '新しい版があります。タップして更新',
 
     'csv.day': '日付',
     'csv.start': '開始時刻',
@@ -497,6 +498,7 @@ const dict = {
     'backup.error': 'Could not read the file. Nothing was changed.',
     'backup.newer': 'This file was made by a newer version of the app and cannot be read.',
     'storage.error': 'Could not save data. Check the free space on this device.',
+    'update.available': 'A new version is available. Tap to update',
 
     'csv.day': 'Date',
     'csv.start': 'Start',
