@@ -1,9 +1,10 @@
 import { store } from '../app-store.js';
 import { sortTodos, sortedCategories, visibleTodos } from '../calc.js';
 import { t } from '../i18n.js';
-import { h, icon, colorDot, empty } from '../ui.js';
+import { h, icon, colorDot, empty, setChildren } from '../ui.js';
 import { openTodoForm, todoRow } from '../todo-form.js';
 import { settingsButton } from '../nav.js';
+import { streakBanner } from '../streak.js';
 
 const view = { sort: 'due', showOpen: true, showDone: false };
 const SORTS = [['due', 'todo.sortDue'], ['category', 'todo.sortCategory'], ['newest', 'todo.sortNewest'], ['oldest', 'todo.sortOldest']];
@@ -41,8 +42,9 @@ export function renderTodos(root) {
     'aria-pressed': on ? 'true' : 'false',
     onClick: () => { onClick(); renderTodos(root); },
   }, label);
-  root.replaceChildren(
+  setChildren(root,
     h('header', { class: 'page-head' }, h('h1', {}, t('todo.title')), settingsButton()),
+    streakBanner(),
     h('div', { class: 'sort-bar' }, SORTS.map(([key, label]) => chip(t(label), view.sort === key, () => { view.sort = key; }))),
     h('div', { class: 'sort-bar filter' },
       chip(t('todo.filterOpen'), view.showOpen, () => { view.showOpen = !view.showOpen; }),

@@ -3,7 +3,7 @@ import { store, subjectName } from '../app-store.js';
 import { computeSession, formatClock, sortByDue } from '../calc.js';
 import { candidateTodos, visibleSubjects } from '../store.js';
 import { t } from '../i18n.js';
-import { h, icon, iconButton, actionMenu, confirmDialog, formatDuration, toast } from '../ui.js';
+import { h, icon, iconButton, actionMenu, confirmDialog, formatDuration, toast, setChildren } from '../ui.js';
 import { datetimeField, durationField, field, selectField, toggled } from '../fields.js';
 import { goTab } from '../nav.js';
 import { dueLabel, todoRow } from '../todo-form.js';
@@ -83,8 +83,8 @@ function closeBtn() {
 
 export function renderSession(root) {
   const a = store.state.activeSession;
-  if (a.status === 'ended') root.replaceChildren(...endScreen(a));
-  else root.replaceChildren(...(a.mode === 'pomodoro' ? pomodoroScreen(a) : stopwatchScreen(a)));
+  if (a.status === 'ended') setChildren(root, endScreen(a));
+  else setChildren(root, a.mode === 'pomodoro' ? pomodoroScreen(a) : stopwatchScreen(a));
 }
 
 function pomodoroScreen(a) {

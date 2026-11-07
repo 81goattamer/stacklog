@@ -4,7 +4,7 @@ import { store } from '../app-store.js';
 import { sortByDue } from '../calc.js';
 import { candidateTodos, visibleSubjects } from '../store.js';
 import { t } from '../i18n.js';
-import { h, icon, iconButton, closeAllSheets, formatDateTime, toast } from '../ui.js';
+import { h, icon, iconButton, closeAllSheets, formatDateTime, toast, setChildren } from '../ui.js';
 import { checkList, datetimeField, durationField, field, selectField, seg, toggled } from '../fields.js';
 import { goTab } from '../nav.js';
 import { renderSession } from './session.js';
@@ -46,7 +46,7 @@ export function renderRecord(root) {
     return;
   }
   if (view.subjectId && !store.get('subjects', view.subjectId)) view = fresh();
-  root.replaceChildren(...recordForm());
+  setChildren(root, recordForm());
 }
 
 function recordForm() {

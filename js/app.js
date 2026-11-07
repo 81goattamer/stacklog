@@ -9,13 +9,17 @@ import { renderRecord } from './views/record.js';
 import { renderList } from './views/list.js';
 import { renderTodos } from './views/todos.js';
 import { renderSettings } from './views/settings.js';
+import { renderExams } from './views/exams.js';
+import { renderTimeline } from './views/timeline.js';
 import { clearTickers, openDraftDialog, sessionBanner, syncWakeLock, tickSession } from './views/session.js';
 
-// ナビの並びは左から todo・本棚・データ。記録は本棚の記録ボタン、設定は各画面の右上の歯車から開く
+// ナビの並びは左から 試験・todo・本棚・データ・タイムライン。記録は本棚の記録ボタン、設定は各画面の右上の歯車から開く
 const TABS = [
+  { id: 'exams', icon: 'file', render: renderExams },
   { id: 'todo', icon: 'checklist', render: renderTodos },
   { id: 'shelf', icon: 'shelf', render: renderShelf },
   { id: 'list', icon: 'calendar', render: renderList },
+  { id: 'timeline', icon: 'list', render: renderTimeline },
   { id: 'record', render: renderRecord },
   { id: 'settings', render: renderSettings },
 ];

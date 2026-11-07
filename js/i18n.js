@@ -1,7 +1,9 @@
 const dict = {
   ja: {
     'tab.shelf': '本棚',
+    'tab.exams': '試験',
     'tab.list': 'データ',
+    'tab.timeline': 'タイムライン',
     'tab.todo': 'todo',
     'tab.settings': '設定',
 
@@ -120,7 +122,6 @@ const dict = {
     'list.title': 'データ',
     'list.calendar': 'カレンダー',
     'list.data': 'グラフ',
-    'list.exams': '試験',
     'streak.active': '{n}日連続学習中',
     'streak.pending': '今日やったら{n}日連続',
     'streak.none': '今日から始めよう',
@@ -138,7 +139,6 @@ const dict = {
     'data.total': '合計 {time}',
     'data.trend': '学習時間の推移',
     'data.share': 'カテゴリ別の割合',
-    'data.timeline': 'タイムライン',
     'data.noData': 'この期間の記録はありません',
     'data.noRecords': '記録がありません',
     'data.unset': '未分類',
@@ -256,7 +256,9 @@ const dict = {
   },
   en: {
     'tab.shelf': 'Shelf',
+    'tab.exams': 'Exams',
     'tab.list': 'Data',
+    'tab.timeline': 'Timeline',
     'tab.todo': 'To-do',
     'tab.settings': 'Settings',
 
@@ -375,7 +377,6 @@ const dict = {
     'list.title': 'Data',
     'list.calendar': 'Calendar',
     'list.data': 'Charts',
-    'list.exams': 'Exams',
     'streak.active': '{n}-day streak',
     'streak.pending': 'Study today for a {n}-day streak',
     'streak.none': 'Start today',
@@ -393,7 +394,6 @@ const dict = {
     'data.total': 'Total {time}',
     'data.trend': 'Study time',
     'data.share': 'By category',
-    'data.timeline': 'Timeline',
     'data.noData': 'No records in this period',
     'data.noRecords': 'No records yet',
     'data.unset': 'Unclassified',

@@ -2,10 +2,11 @@ import { store } from '../app-store.js';
 import { sortedCategories } from '../calc.js';
 import { visibleSubjects } from '../store.js';
 import { t } from '../i18n.js';
-import { h, icon, iconButton, colorDot, empty, subjectCover } from '../ui.js';
+import { h, icon, iconButton, colorDot, empty, subjectCover, setChildren } from '../ui.js';
 import { seg } from '../fields.js';
 import { confirmPurge, openCategoryForm, openSubjectDelete, openSubjectDetail, openSubjectForm } from '../subject.js';
 import { settingsButton } from '../nav.js';
+import { streakBanner } from '../streak.js';
 import { openRecord } from './record.js';
 
 const view = { status: 'studying', editing: false };
@@ -107,8 +108,9 @@ export function renderShelf(root) {
   rootEl = root;
   const subjects = visibleSubjects(store.state, view.status);
   const show = subjects.length || view.editing;
-  root.replaceChildren(
+  setChildren(root,
     h('header', { class: 'page-head' }, h('h1', {}, t('shelf.title')), settingsButton()),
+    streakBanner(),
     seg(['waiting', 'studying', 'finished'].map((v) => [v, t(`status.${v}`)]), view.status, (v) => {
       view.status = v;
       rerender();

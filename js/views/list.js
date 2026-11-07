@@ -1,35 +1,31 @@
 import { store } from '../app-store.js';
 import {
-  addDays, calendarColors, categoryShares, dayKey, periodRange, streak, studySeries, timeAxisMax, weekStartKey, weekdayOf,
+  addDays, calendarColors, categoryShares, dayKey, periodRange, studySeries, timeAxisMax, weekStartKey, weekdayOf,
 } from '../calc.js';
+import { streakBanner } from '../streak.js';
 import { t } from '../i18n.js';
-import { h, icon, iconButton, colorDot, empty, formatDate, formatDuration, openSheet, textOn } from '../ui.js';
+import { h, icon, iconButton, colorDot, formatDate, formatDuration, openSheet, textOn, setChildren } from '../ui.js';
 import { seg } from '../fields.js';
 import { barChart, donutChart } from '../chart.js';
 import { recordRow } from '../record-form.js';
-import { attemptResult, attemptsOf, openExamDetail, openExamForm, openMilestoneList } from '../exam.js';
+import { attemptResult } from '../exam.js';
 import { settingsButton } from '../nav.js';
 
-const view = { tab: 'calendar', calOffset: 0, period: 'week', offset: 0, timeline: 50 };
+const view = { tab: 'calendar', calOffset: 0, period: 'week', offset: 0 };
 let rootEl = null;
 const rerender = () => renderList(rootEl);
 
 export function renderList(root) {
   rootEl = root;
-  const body = { calendar: calendarTab, data: dataTab, exams: examsTab }[view.tab]();
-  root.replaceChildren(
+  const body = { calendar: calendarTab, data: dataTab }[view.tab]();
+  setChildren(root,
     h('header', { class: 'page-head' }, h('h1', {}, t('list.title')), settingsButton()),
     streakBanner(),
-    seg([['calendar', t('list.calendar')], ['data', t('list.data')], ['exams', t('list.exams')]], view.tab, (v) => {
+    seg([['calendar', t('list.calendar')], ['data', t('list.data')]], view.tab, (v) => {
       view.tab = v;
       rerender();
     }, 'wide'),
     body);
-}
-
-function streakBanner() {
-  const s = streak(store.state.records, store.state.settings.streakMinMinutes, Date.now());
-  return h('div', { class: `streak ${s.kind}` }, icon('flame', { size: 20, fill: s.kind === 'active' }), h('span', {}, t(`streak.${s.kind}`, { n: s.n })));
 }
 
 // ---- カレンダー ----
@@ -140,7 +136,6 @@ function dataTab() {
   const nameOf = (row) => (row.key === 'none' ? t('category.none') : row.key === 'unset' ? t('data.unset') : row.name);
   const percent = (v) => `${Math.round((v / total) * 100)}%`;
 
-  const timeline = [...s.records].sort((a, b) => b.startAt - a.startAt);
   return h('div', {},
     seg([['week', t('data.week')], ['month', t('data.month')], ['year', t('data.year')]], view.period, (v) => {
       view.period = v;
@@ -167,33 +162,5 @@ function dataTab() {
             h('span', { class: 'grow ellipsis' }, nameOf(r)),
             h('span', { class: 'legend-time' }, formatDuration(r.seconds)),
             h('span', { class: 'legend-pct' }, percent(r.seconds))))))
-        : h('p', { class: 'muted small pad center' }, t('data.noData'))),
-    h('div', { class: 'section-head' }, h('h3', {}, t('data.timeline'))),
-    timeline.length
-      ? h('div', { class: 'card list' }, timeline.slice(0, view.timeline).map(recordRow))
-      : h('p', { class: 'muted small pad' }, t('data.noRecords')),
-    timeline.length > view.timeline
-      ? h('button', { type: 'button', class: 'btn block next-btn', onClick: () => { view.timeline += 50; rerender(); } }, t('common.more'))
-      : null);
-}
-
-// ---- 試験 ----
-
-function examsTab() {
-  const exams = store.state.exams;
-  return h('div', {},
-    h('div', { class: 'section-head' },
-      h('h3', {}, t('exam.title')),
-      h('div', { class: 'head-actions' },
-        iconButton('gem', t('exam.gem'), openMilestoneList),
-        iconButton('plus', t('exam.add'), () => openExamForm()))),
-    exams.length
-      ? h('div', { class: 'card list' }, exams.map((e) => {
-        const latest = attemptsOf(e.id)[0];
-        return h('button', { type: 'button', class: 'list-row', onClick: () => openExamDetail(e.id) },
-          icon('file', { size: 20 }),
-          h('span', { class: 'grow' }, e.name, latest ? h('small', { class: 'sub block' }, `${formatDate(latest.date)} · ${attemptResult(e, latest)}`) : null),
-          icon('chevron', { size: 16 }));
-      }))
-      : empty(t('exam.empty'), 'file'));
+        : h('p', { class: 'muted small pad center' }, t('data.noData'))));
 }

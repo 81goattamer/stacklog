@@ -39,7 +39,7 @@ ES モジュールと Service Worker を使うため、`index.html` をファイ
 | `js/calc.js` | 保存しない値の計算（日付の区切り・ストリーク・グラフ・バッジ・タイマーの経過）。DOM に依存しない |
 | `js/db.js` | IndexedDB への保存。起動時に全部メモリへ読み込み、以後は変更だけを書き込む |
 | `js/app.js` | タブ切り替えと再描画、起動時の復元 |
-| `js/views/` | 5つのメイン画面と、記録中の画面（`session.js`） |
+| `js/views/` | ナビの5画面（試験・todo・本棚・データ・タイムライン）と、記録・設定・記録中（`session.js`）の画面 |
 | `js/subject.js` / `js/exam.js` | 科目・カテゴリ、試験まわりのシート |
 | `js/todo-form.js` / `js/record-form.js` / `js/fields.js` | todo・記録の編集と入力欄の部品 |
 | `js/chart.js` | グラフ（SVG） |

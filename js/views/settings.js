@@ -1,7 +1,7 @@
 import { store } from '../app-store.js';
 import { recordsCsv } from '../store.js';
 import { t } from '../i18n.js';
-import { h, icon, iconButton, confirmDialog, downloadFile, formatDateTime, openSheet, toast } from '../ui.js';
+import { h, icon, iconButton, confirmDialog, downloadFile, formatDateTime, openSheet, toast, setChildren } from '../ui.js';
 import { seg } from '../fields.js';
 import { goBack } from '../nav.js';
 
@@ -38,7 +38,7 @@ export function renderSettings(root) {
       else e.target.value = String(store.state.settings.streakMinMinutes);
     },
   });
-  root.replaceChildren(
+  setChildren(root,
     h('header', { class: 'page-head' },
       iconButton('back', t('common.back'), goBack),
       h('h1', { class: 'sub-title' }, t('settings.title'))),

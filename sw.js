@@ -24,14 +24,17 @@ const FILES = [
   './js/nav.js',
   './js/record-form.js',
   './js/store.js',
+  './js/streak.js',
   './js/subject.js',
   './js/todo-form.js',
   './js/ui.js',
+  './js/views/exams.js',
   './js/views/list.js',
   './js/views/record.js',
   './js/views/session.js',
   './js/views/settings.js',
   './js/views/shelf.js',
+  './js/views/timeline.js',
   './js/views/todos.js',
 ];
 
