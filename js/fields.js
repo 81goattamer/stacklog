@@ -66,6 +66,17 @@ export function datetimeField(ms, onChange, { clearable = false } = {}) {
   }, t('common.clear')));
 }
 
+// 勉強内容の自由記述
+export function memoField(value, onChange) {
+  return h('textarea', {
+    class: 'input memo-input',
+    rows: 3,
+    value: value ?? '',
+    placeholder: t('field.memoPlaceholder'),
+    onInput: (e) => onChange(e.target.value),
+  });
+}
+
 export function dateField(value, onChange) {
   return h('input', { class: 'input', type: 'date', value: value ?? '', onInput: (e) => onChange(e.target.value) });
 }

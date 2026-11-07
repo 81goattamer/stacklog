@@ -1,9 +1,9 @@
 import { store, subjectName } from './app-store.js';
-import { sortByDue } from './calc.js';
+import { sortByDue, studyShareText } from './calc.js';
 import { visibleSubjects } from './store.js';
 import { t } from './i18n.js';
-import { h, colorDot, openSheet, confirmDialog, toast, formatDateTime, formatDuration } from './ui.js';
-import { checkList, datetimeField, durationField, field, selectField, toggled } from './fields.js';
+import { h, colorDot, iconButton, openSheet, confirmDialog, toast, formatDateTime, formatDuration } from './ui.js';
+import { checkList, datetimeField, durationField, field, memoField, selectField, toggled } from './fields.js';
 
 export function subjectColor(id) {
   return store.get('subjects', id)?.color ?? 'var(--muted)';
@@ -24,11 +24,13 @@ export function recordRow(rec) {
 export function openRecordEdit(id) {
   const cur = store.get('records', id);
   if (!cur) return;
-  const f = { subjectId: cur.subjectId, todoIds: [...cur.todoIds], startAt: cur.startAt, studySeconds: cur.studySeconds, breakSeconds: cur.breakSeconds };
+  const f = { subjectId: cur.subjectId, todoIds: [...cur.todoIds], startAt: cur.startAt, studySeconds: cur.studySeconds, breakSeconds: cur.breakSeconds, memo: cur.memo ?? '' };
   let err = '';
   const sheet = openSheet({
     title: t('edit.title'),
     full: true,
+    // 左上の×と対称の位置に共有ボタンを置く。共有するのは画面に出ている内容
+    headerRight: () => iconButton('share', t('share.button'), () => shareRecord(f)),
     render: () => {
       const options = visibleSubjects(store.state);
       const current = f.subjectId ? store.get('subjects', f.subjectId) : null;
@@ -38,6 +40,7 @@ export function openRecordEdit(id) {
         || (x.completedAt == null && (!f.subjectId || x.subjectId === f.subjectId))));
       return h('div', { class: 'form' },
         field(t('field.subject'), selectField(f.subjectId, options, t('subject.none'), (v) => { f.subjectId = v; sheet.refresh(); })),
+        field(t('field.memo'), memoField(f.memo, (v) => { f.memo = v; })),
         field(t('field.startAt'), datetimeField(f.startAt, (v) => { f.startAt = v; })),
         field(t('field.study'), durationField(f.studySeconds, (v) => { f.studySeconds = v; })),
         field(t('field.break'), durationField(f.breakSeconds, (v) => { f.breakSeconds = v; })),
@@ -70,4 +73,28 @@ export function openRecordEdit(id) {
         }, t('common.delete')));
     },
   });
+}
+
+// 記録を文章にして共有する。共有メニューがない環境ではコピーする
+async function shareRecord(f) {
+  const text = studyShareText({
+    subject: f.subjectId ? subjectName(f.subjectId) : t('subject.none'),
+    startAt: f.startAt,
+    studySeconds: f.studySeconds,
+    memo: f.memo,
+  }, { title: t('share.title'), subject: t('field.subject'), start: t('field.startAt'), study: t('field.study'), sep: t('share.sep') });
+  if (navigator.share) {
+    try {
+      await navigator.share({ text });
+      return;
+    } catch (e) {
+      if (e?.name === 'AbortError') return;
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    toast(t('share.copied'));
+  } catch {
+    toast(t('share.failed'));
+  }
 }

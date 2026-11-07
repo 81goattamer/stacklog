@@ -82,7 +82,7 @@ async function exportJson() {
 
 function exportCsv() {
   const csv = recordsCsv(store.state, {
-    header: ['day', 'start', 'subject', 'category', 'todos', 'study', 'break', 'mode'].map((k) => t(`csv.${k}`)),
+    header: ['day', 'start', 'subject', 'category', 'todos', 'memo', 'study', 'break', 'mode'].map((k) => t(`csv.${k}`)),
     modeLabel: (m) => t(`mode.${m}`),
     formatStart: formatDateTime,
   });

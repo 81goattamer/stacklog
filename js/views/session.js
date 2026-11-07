@@ -4,7 +4,7 @@ import { computeSession, formatClock, sortByDue } from '../calc.js';
 import { candidateTodos, visibleSubjects } from '../store.js';
 import { t } from '../i18n.js';
 import { h, icon, iconButton, actionMenu, confirmDialog, formatDuration, toast, setChildren } from '../ui.js';
-import { datetimeField, durationField, field, selectField, toggled } from '../fields.js';
+import { datetimeField, durationField, field, memoField, selectField, toggled } from '../fields.js';
 import { goTab } from '../nav.js';
 import { dueLabel, todoRow } from '../todo-form.js';
 import { resetRecordView } from './record.js';
@@ -188,6 +188,7 @@ function endScreen(a) {
     h('div', { class: 'run-clock' }, bigEl, breakEl),
     h('div', { class: 'form card pad-card' },
       field(t('field.subject'), selectField(f.subjectId, subjects, t('subject.none'), (v) => store.updateResult({ subjectId: v }))),
+      field(t('field.memo'), memoField(f.memo, (v) => store.updateResult({ memo: v }, { silent: true }))),
       field(t('field.startAt'), datetimeField(f.startAt, (v) => { if (v != null) store.updateResult({ startAt: v }, { silent: true }); })),
       field(t('field.study'), durationField(f.studySeconds, (v) => {
         store.updateResult({ studySeconds: v }, { silent: true });

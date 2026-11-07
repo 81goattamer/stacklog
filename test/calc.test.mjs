@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   GRAY, PALETTE, addDays, calendarColors, categoryShares, computeSession, dayDiff, dayKey, defaultCategoryColor, examStudySeconds, isDateKey, overdueDays,
-  periodRange, sortTodos, streak, studySeries, timeAxisMax, todoBadge, visibleTodos, weekStartKey,
+  periodRange, sortTodos, streak, studySeries, studyShareText, timeAxisMax, todoBadge, visibleTodos, weekStartKey,
 } from '../js/calc.js';
 
 const at = (s) => new Date(s).getTime();
@@ -221,4 +221,12 @@ test('stopwatch: running is study, paused is break', () => {
   const stopped = computeSession({ mode: 'stopwatch', pomodoro: null, events: [...events, { type: 'stop', at: 10 * MIN }] }, 99 * MIN);
   assert.equal(stopped.ended, true);
   assert.equal(stopped.studyMs, 8 * MIN);
+});
+
+test('share text follows the requested format', () => {
+  const L = { title: '勉強記録', subject: '科目', start: '開始時刻', study: '勉強時間', sep: '　' };
+  const text = studyShareText({ subject: '微分積分学', startAt: at('2026-11-04T17:23:00'), studySeconds: 48 * 60 + 59, memo: '斉次方程式の解き方をパターン別で勉強した。\n' }, L);
+  assert.equal(text, '勉強記録\n科目　微分積分学\n開始時刻　17:23\n勉強時間　00:48\n斉次方程式の解き方をパターン別で勉強した。');
+  const noMemo = studyShareText({ subject: '英語', startAt: at('2026-11-04T09:05:00'), studySeconds: 125 * 60, memo: '  ' }, L);
+  assert.equal(noMemo, '勉強記録\n科目　英語\n開始時刻　09:05\n勉強時間　02:05');
 });

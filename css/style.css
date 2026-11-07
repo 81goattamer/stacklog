@@ -134,6 +134,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .input.num { width: 76px; flex: none; text-align: right; appearance: textfield; }
 .input.num::-webkit-inner-spin-button, .input.num::-webkit-outer-spin-button { appearance: none; margin: 0; }
 select.input { appearance: auto; }
+textarea.input { resize: vertical; min-height: 84px; line-height: 1.5; }
 
 .error { color: var(--danger); font-size: 14px; margin: 4px 0; }
 .empty { text-align: center; color: var(--muted); padding: 56px 16px; }

@@ -346,6 +346,21 @@ export function fromLocalInput(s) {
   return Number.isFinite(ms) ? ms : null;
 }
 
+// 共有する文章。開始時刻は時:分、勉強時間は 時間:分（2桁ずつ）。勉強内容が空なら最後の行は付けない
+export function studyShareText({ subject, startAt, studySeconds, memo }, L) {
+  const d = new Date(startAt);
+  const mins = Math.floor(studySeconds / 60);
+  const lines = [
+    L.title,
+    `${L.subject}${L.sep}${subject}`,
+    `${L.start}${L.sep}${p2(d.getHours())}:${p2(d.getMinutes())}`,
+    `${L.study}${L.sep}${p2(Math.floor(mins / 60))}:${p2(mins % 60)}`,
+  ];
+  const text = String(memo ?? '').trim();
+  if (text) lines.push(text);
+  return lines.join('\n');
+}
+
 export function formatClock(ms) {
   const total = Math.max(0, Math.ceil(ms / 1000));
   const h = Math.floor(total / 3600);

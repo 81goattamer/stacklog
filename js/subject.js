@@ -1,5 +1,5 @@
 import { store } from './app-store.js';
-import { GRAY, defaultCategoryColor, sortedCategories } from './calc.js';
+import { GRAY, defaultCategoryColor, sortedCategories, visibleTodos } from './calc.js';
 import { t } from './i18n.js';
 import { h, icon, iconButton, actionMenu, blobUrl, bookMark, colorDot, confirmDialog, formatDuration, openSheet, subjectCover, toast } from './ui.js';
 import { colorSwatches, field, selectField, seg } from './fields.js';
@@ -81,7 +81,8 @@ export function openSubjectDetail(id) {
         return h('div');
       }
       api.setTitle(s.name);
-      const todos = store.state.todos.filter((x) => x.subjectId === id && x.completedAt == null);
+      // todo 画面と同じく、完了にしたものもその日（午前4時まで）は灰色で残す（TODO-40）
+      const todos = visibleTodos(store.state.todos.filter((x) => x.subjectId === id), { showOpen: true, showDone: false }, Date.now());
       const records = store.state.records.filter((r) => r.subjectId === id).sort((a, b) => b.startAt - a.startAt);
       const total = records.reduce((a, r) => a + r.studySeconds, 0);
       const category = s.categoryId ? store.get('categories', s.categoryId) : null;

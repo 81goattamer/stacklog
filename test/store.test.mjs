@@ -344,3 +344,23 @@ test('csv quotes cells, neutralizes formulas and has a BOM', () => {
   assert.ok(csv.startsWith('﻿d,s,n'));
   assert.ok(csv.includes(`"'=SUM(A1),""x"""`));
 });
+
+test('memo is kept from the end screen, editable, exported and repaired', async () => {
+  const { st, clock } = setup();
+  st.startSession({ mode: 'stopwatch' });
+  clock.t += 60_000;
+  st.sessionEvent('stop');
+  assert.equal(st.state.activeSession.result.memo, '');
+  st.updateResult({ memo: ' 斉次方程式 ' }, { silent: true });
+  const id = st.saveSession().id;
+  assert.equal(st.get('records', id).memo, '斉次方程式');
+  const r = st.get('records', id);
+  st.updateRecord(id, { ...r, memo: '書き直し' });
+  assert.equal(st.get('records', id).memo, '書き直し');
+  const data = st.parseBackup(JSON.stringify(await st.exportData()));
+  assert.equal(data.records[0].memo, '書き直し');
+  const old = st.parseBackup(JSON.stringify({ app: 'Stacklog', schemaVersion: 1, data: { records: [{ id: 'r', startAt: clock.t, studySeconds: 60 }] } }));
+  assert.equal(old.records[0].memo, '');
+  const csv = recordsCsv(st.state, { header: ['h'], modeLabel: (m) => m, formatStart: () => '' });
+  assert.ok(csv.includes('書き直し'));
+});

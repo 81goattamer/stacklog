@@ -106,6 +106,7 @@ export function sanitize(raw) {
       startAt: x.startAt,
       studySeconds: Math.round(x.studySeconds),
       breakSeconds: Math.round(x.breakSeconds ?? 0),
+      memo: str(x.memo),
       dayKey: dayKey(x.startAt),
       ...common(x, i),
     });
@@ -218,6 +219,7 @@ export function recordsCsv(state, { header, modeLabel, formatStart }) {
       sub?.name ?? '',
       sub?.categoryId ? categories.get(sub.categoryId) ?? '' : '',
       r.todoIds.map((id) => todos.get(id)).filter(Boolean).join(' / '),
+      r.memo ?? '',
       r.studySeconds,
       r.breakSeconds,
       modeLabel(r.mode),
@@ -489,6 +491,7 @@ export class Store {
       startAt: f.startAt,
       studySeconds: Math.max(0, Math.round(f.studySeconds)),
       breakSeconds: Math.max(0, Math.round(f.breakSeconds ?? 0)),
+      memo: String(f.memo ?? '').trim(),
       dayKey: dayKey(f.startAt),
     };
   }
@@ -591,6 +594,7 @@ export class Store {
       startAt: c.startAt,
       studySeconds: Math.round(c.studyMs / 1000),
       breakSeconds: Math.round(c.breakMs / 1000),
+      memo: '',
     };
     this.putSession();
     return true;
