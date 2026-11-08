@@ -10,6 +10,7 @@
   --accent-text: #ffffff;
   --break: #0f8a7e;
   --danger: #d70015;
+  --warn: #9a6a00;
   --chart-grid: #e5e5ea;
   --shadow: 0 8px 30px rgba(0, 0, 0, .12);
   --radius: 14px;
@@ -32,6 +33,7 @@
     --accent-text: #0b1020;
     --break: #4fd1c0;
     --danger: #ff453a;
+  --warn: #ffd60a;
     --chart-grid: #2c2c2e;
     --shadow: 0 8px 30px rgba(0, 0, 0, .6);
     color-scheme: dark;
@@ -50,6 +52,7 @@
   --accent-text: #0b1020;
   --break: #4fd1c0;
   --danger: #ff453a;
+  --warn: #ffd60a;
   --chart-grid: #2c2c2e;
   --shadow: 0 8px 30px rgba(0, 0, 0, .6);
   color-scheme: dark;
@@ -261,6 +264,8 @@ textarea.input { resize: vertical; min-height: 84px; line-height: 1.5; }
 .todo-row.done .todo-content { color: var(--muted); text-decoration: line-through; }
 .due { font-variant-numeric: tabular-nums; }
 .due.over { color: var(--danger); font-weight: 600; }
+.todo-row.due-red .todo-content, .todo-row.due-red .due { color: var(--danger); }
+.todo-row.due-yellow .todo-content, .todo-row.due-yellow .due { color: var(--warn); }
 .row-more { color: var(--muted); }
 .link-toggle { padding: 2px 0; }
 .linked-tag { flex: none; font-size: 12px; font-weight: 600; padding: 2px 8px; margin-right: 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
@@ -280,6 +285,7 @@ textarea.input { resize: vertical; min-height: 84px; line-height: 1.5; }
 /* ---- 記録中 ---- */
 .run-subject { margin: -4px 0 8px; color: var(--muted); font-weight: 600; word-break: break-word; }
 .close-run { color: var(--muted); background: var(--fill); }
+.share-run { background: var(--fill); }
 .ring-wrap { position: relative; width: min(280px, 78vw); margin: 8px auto 18px; }
 .ring { display: block; width: 100%; height: auto; transform: rotate(-90deg); }
 .ring circle { fill: none; stroke-width: 14; }

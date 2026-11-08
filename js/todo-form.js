@@ -1,5 +1,5 @@
 import { store, subjectName } from './app-store.js';
-import { overdueDays, sortByDue } from './calc.js';
+import { overdueDays, sortByDue, todoUrgency } from './calc.js';
 import { visibleSubjects } from './store.js';
 import { t } from './i18n.js';
 import { h, icon, iconButton, openSheet, actionMenu, confirmDialog, formatDateTime } from './ui.js';
@@ -65,11 +65,17 @@ export function dueLabel(todo) {
     n != null ? ` · ${n > 0 ? t('todo.overdue', { n }) : t('todo.overdueToday')}` : null);
 }
 
+// 締め切りが近い todo の文字色（24時間以内は赤、72時間以内は黄色）
+export function urgencyClass(todo) {
+  const u = todoUrgency(todo, Date.now());
+  return u ? `due-${u}` : '';
+}
+
 // todo の1行。onToggle で完了を切り替える。menu を付けると右端に … を出す
 export function todoRow(todo, { onToggle, menu = true, showSubject = true, extra = null }) {
   const done = todo.completedAt != null;
   const name = showSubject && todo.subjectId ? subjectName(todo.subjectId) : '';
-  return h('div', { class: `todo-row ${done ? 'done' : ''}` },
+  return h('div', { class: `todo-row ${done ? 'done' : ''} ${urgencyClass(todo)}` },
     h('button', {
       type: 'button',
       class: `check big ${done ? 'on' : ''}`,

@@ -6,8 +6,9 @@ import { t } from '../i18n.js';
 import { h, icon, iconButton, actionMenu, confirmDialog, formatDuration, toast, setChildren } from '../ui.js';
 import { datetimeField, durationField, field, memoField, selectField, toggled } from '../fields.js';
 import { goTab } from '../nav.js';
-import { dueLabel, todoRow } from '../todo-form.js';
+import { dueLabel, todoRow, urgencyClass } from '../todo-form.js';
 import { resetRecordView } from './record.js';
+import { shareRecord } from '../record-form.js';
 
 // 1秒ごとに数字だけ書き換える処理。再描画のたびに登録し直す
 const tickers = new Set();
@@ -184,7 +185,11 @@ function endScreen(a) {
   if (current && !subjects.includes(current)) subjects.push(current);
   const todos = sessionTodos(a);
   return [
-    h('header', { class: 'page-head' }, h('h1', { class: 'sub-title' }, t('end.title')), closeBtn()),
+    h('header', { class: 'page-head' },
+      h('h1', { class: 'sub-title' }, t('end.title')),
+      // 共有するのは、押した時点で画面に出ている内容
+      iconButton('share', t('share.button'), () => shareRecord(store.state.activeSession.result), 'share-run'),
+      closeBtn()),
     h('div', { class: 'run-clock' }, bigEl, breakEl),
     h('div', { class: 'form card pad-card' },
       field(t('field.subject'), selectField(f.subjectId, subjects, t('subject.none'), (v) => store.updateResult({ subjectId: v }))),
@@ -218,7 +223,7 @@ function endScreen(a) {
 function endTodoRow(todo, f) {
   const done = todo.completedAt != null;
   const linked = f.todoIds.includes(todo.id);
-  return h('div', { class: `todo-row ${done ? 'done' : ''}` },
+  return h('div', { class: `todo-row ${done ? 'done' : ''} ${urgencyClass(todo)}` },
     h('button', {
       type: 'button',
       class: `check big ${done ? 'on' : ''}`,

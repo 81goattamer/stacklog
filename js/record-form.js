@@ -76,7 +76,7 @@ export function openRecordEdit(id) {
 }
 
 // 記録を文章にして共有する。共有メニューがない環境ではコピーする
-async function shareRecord(f) {
+export async function shareRecord(f) {
   const text = studyShareText({
     subject: f.subjectId ? subjectName(f.subjectId) : t('subject.none'),
     startAt: f.startAt,

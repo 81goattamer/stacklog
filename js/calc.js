@@ -208,6 +208,15 @@ export function todoBadge(todos, now) {
   return { red, normal: red ? 0 : near, app: near };
 }
 
+// 締め切りまでの近さ（未完了のものだけ）。24時間以内（期限切れを含む）は red、72時間以内は yellow
+export function todoUrgency(todo, now) {
+  if (todo.completedAt != null || todo.dueAt == null) return null;
+  const left = todo.dueAt - now;
+  if (left <= 24 * HOUR) return 'red';
+  if (left <= 72 * HOUR) return 'yellow';
+  return null;
+}
+
 export function overdueDays(todo, now) {
   if (todo.completedAt != null || todo.dueAt == null || todo.dueAt >= now) return null;
   return dayDiff(dayKey(now), dayKey(todo.dueAt));

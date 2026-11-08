@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  GRAY, PALETTE, addDays, calendarColors, categoryShares, computeSession, dayDiff, dayKey, defaultCategoryColor, examSchedule, examStudySeconds, isDateKey, overdueDays,
+  GRAY, PALETTE, todoUrgency, addDays, calendarColors, categoryShares, computeSession, dayDiff, dayKey, defaultCategoryColor, examSchedule, examStudySeconds, isDateKey, overdueDays,
   periodRange, sortTodos, streak, studySeries, studyShareText, timeAxisMax, todoBadge, visibleTodos, weekStartKey,
 } from '../js/calc.js';
 
@@ -239,4 +239,16 @@ test('exam schedule: next is today or later, last is before today', () => {
   assert.equal(last.date, '2026-10-20');
   assert.deepEqual(examSchedule([], '2026-11-04'), { next: null, last: null });
   assert.equal(examSchedule([a('2026-01-01')], '2026-11-04').next, null);
+});
+
+test('todo urgency: red within 24h or overdue, yellow within 72h, none when done or no due', () => {
+  const now = at('2026-11-04T12:00:00');
+  const t = (h, extra = {}) => ({ dueAt: now + h * HOUR, completedAt: null, ...extra });
+  assert.equal(todoUrgency(t(-30), now), 'red');
+  assert.equal(todoUrgency(t(24), now), 'red');
+  assert.equal(todoUrgency(t(24.01), now), 'yellow');
+  assert.equal(todoUrgency(t(72), now), 'yellow');
+  assert.equal(todoUrgency(t(72.01), now), null);
+  assert.equal(todoUrgency(t(1, { completedAt: now }), now), null);
+  assert.equal(todoUrgency({ dueAt: null, completedAt: null }, now), null);
 });
