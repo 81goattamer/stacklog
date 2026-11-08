@@ -1,12 +1,12 @@
 // 記録中の画面（SCR-24, SCR-25）と終了画面（SCR-27）
 import { store, subjectName } from '../app-store.js';
 import { computeSession, formatClock, sortByDue } from '../calc.js';
-import { candidateTodos, visibleSubjects } from '../store.js';
+import { visibleSubjects } from '../store.js';
 import { t } from '../i18n.js';
 import { h, icon, iconButton, actionMenu, confirmDialog, formatDuration, toast, setChildren } from '../ui.js';
-import { datetimeField, durationField, field, memoField, selectField, toggled } from '../fields.js';
+import { datetimeField, durationField, field, memoField, selectField } from '../fields.js';
 import { goTab } from '../nav.js';
-import { dueLabel, todoRow, urgencyClass } from '../todo-form.js';
+import { todoRow } from '../todo-form.js';
 import { resetRecordView } from './record.js';
 import { shareRecord } from '../record-form.js';
 
@@ -60,15 +60,9 @@ async function confirmDiscard() {
   toast(t('record.discarded'));
 }
 
-// 画面に出す todo: 選んだもの → 科目の未完了のもの → 記録中に完了にしたもの（REC-40）
+// 画面に出す todo: 記録を始めるときにセットしたものだけ（REC-40）
 function sessionTodos(a) {
-  const subjectId = a.result ? a.result.subjectId : a.subjectId;
-  const ids = new Set([
-    ...a.selectedTodoIds,
-    ...a.completedTodoIds,
-    ...(a.result?.todoIds ?? []),
-    ...candidateTodos(store.state, subjectId).map((x) => x.id),
-  ]);
+  const ids = new Set([...a.selectedTodoIds, ...(a.result?.todoIds ?? [])]);
   return sortByDue([...ids].map((id) => store.get('todos', id)).filter(Boolean));
 }
 
@@ -135,7 +129,7 @@ function pomodoroScreen(a) {
       h('button', { type: 'button', class: 'btn', onClick: () => store.sessionEvent(paused ? 'resume' : 'pause') },
         icon(paused ? 'play' : 'pause', { size: 18 }), t(paused ? 'run.resume' : 'run.pause')),
       h('button', { type: 'button', class: 'btn', onClick: () => store.sessionEvent('stop') }, icon('stop', { size: 18 }), t('run.stop'))),
-    runningTodos(a),
+    sessionTodoList(a),
   ];
 }
 
@@ -158,11 +152,12 @@ function stopwatchScreen(a) {
       h('button', { type: 'button', class: 'btn', onClick: () => store.sessionEvent(paused ? 'resume' : 'pause') },
         icon(paused ? 'play' : 'pause', { size: 18 }), t(paused ? 'run.resume' : 'run.pause')),
       h('button', { type: 'button', class: 'btn primary', onClick: () => store.sessionEvent('stop') }, icon('stop', { size: 18 }), t('run.finish'))),
-    runningTodos(a),
+    sessionTodoList(a),
   ];
 }
 
-function runningTodos(a) {
+// 記録中・終了画面の todo。丸で完了を切り替える
+function sessionTodoList(a) {
   const todos = sessionTodos(a);
   if (!todos.length) return null;
   return h('section', {},
@@ -170,7 +165,7 @@ function runningTodos(a) {
     h('div', { class: 'card list' }, todos.map((x) => todoRow(x, {
       onToggle: () => store.toggleSessionTodo(x.id),
       menu: false,
-      showSubject: !a.subjectId,
+      showSubject: !(a.result ? a.result.subjectId : a.subjectId),
     }))));
 }
 
@@ -183,7 +178,6 @@ function endScreen(a) {
   const subjects = visibleSubjects(store.state, 'studying');
   const current = f.subjectId ? store.get('subjects', f.subjectId) : null;
   if (current && !subjects.includes(current)) subjects.push(current);
-  const todos = sessionTodos(a);
   return [
     h('header', { class: 'page-head' },
       h('h1', { class: 'sub-title' }, t('end.title')),
@@ -203,10 +197,7 @@ function endScreen(a) {
         store.updateResult({ breakSeconds: v }, { silent: true });
         breakEl.textContent = t('end.break', { time: formatDuration(v) });
       }))),
-    todos.length ? h('section', {},
-      h('div', { class: 'section-head' }, h('h3', {}, t('field.todo'))),
-      h('p', { class: 'muted small hint' }, t('end.todoHint')),
-      h('div', { class: 'card list' }, todos.map((x) => endTodoRow(x, f)))) : null,
+    sessionTodoList(a),
     h('button', {
       type: 'button',
       class: 'btn primary block next-btn',
@@ -218,29 +209,6 @@ function endScreen(a) {
       },
     }, t('end.add')),
   ];
-}
-
-function endTodoRow(todo, f) {
-  const done = todo.completedAt != null;
-  const linked = f.todoIds.includes(todo.id);
-  return h('div', { class: `todo-row ${done ? 'done' : ''} ${urgencyClass(todo)}` },
-    h('button', {
-      type: 'button',
-      class: `check big ${done ? 'on' : ''}`,
-      role: 'checkbox',
-      'aria-checked': done ? 'true' : 'false',
-      'aria-label': `${t('todo.toggle')}: ${todo.content}`,
-      onClick: () => store.toggleSessionTodo(todo.id),
-    }, done ? icon('check', { size: 14 }) : null),
-    h('button', {
-      type: 'button',
-      class: 'grow todo-text link-toggle',
-      'aria-pressed': linked ? 'true' : 'false',
-      onClick: () => store.updateResult({ todoIds: toggled(f.todoIds, todo.id) }),
-    },
-    h('span', { class: 'todo-content' }, todo.content),
-    todo.dueAt != null ? h('span', { class: 'todo-sub' }, dueLabel(todo)) : null),
-    linked ? h('span', { class: 'linked-tag' }, t('end.linked')) : null);
 }
 
 // ---- 他のタブに出す、記録中のお知らせ ----

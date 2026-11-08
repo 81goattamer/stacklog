@@ -264,11 +264,14 @@ textarea.input { resize: vertical; min-height: 84px; line-height: 1.5; }
 .todo-row.done .todo-content { color: var(--muted); text-decoration: line-through; }
 .due { font-variant-numeric: tabular-nums; }
 .due.over { color: var(--danger); font-weight: 600; }
-.todo-row.due-red .todo-content, .todo-row.due-red .due { color: var(--danger); }
-.todo-row.due-yellow .todo-content, .todo-row.due-yellow .due { color: var(--warn); }
+/* 締め切りが近い todo は、内容・科目名・締め切りの文字に色を付ける（TODO-21） */
+.due-red :is(.todo-content, .todo-sub, .due) { color: var(--danger); }
+.due-yellow :is(.todo-content, .todo-sub, .due) { color: var(--warn); }
+.todo-pick { display: flex; align-items: center; gap: 10px; padding: 10px 4px; border-bottom: .5px solid var(--line); min-height: 52px; }
+.todo-pick:last-child { border-bottom: 0; }
+.set-btn { background: var(--fill); }
+.set-btn.on { background: var(--accent); color: var(--accent-text); }
 .row-more { color: var(--muted); }
-.link-toggle { padding: 2px 0; }
-.linked-tag { flex: none; font-size: 12px; font-weight: 600; padding: 2px 8px; margin-right: 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
 
 .check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted); display: inline-flex; align-items: center; justify-content: center; flex: none; color: var(--accent-text); }
 .check.on { background: var(--accent); border-color: var(--accent); }

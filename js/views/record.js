@@ -7,6 +7,7 @@ import { t } from '../i18n.js';
 import { h, icon, iconButton, closeAllSheets, formatDateTime, toast, setChildren } from '../ui.js';
 import { checkList, datetimeField, durationField, field, selectField, seg, toggled } from '../fields.js';
 import { goTab } from '../nav.js';
+import { urgencyClass } from '../todo-form.js';
 import { renderSession } from './session.js';
 
 const MODES = ['pomodoro', 'stopwatch', 'manual'];
@@ -72,12 +73,33 @@ function recordForm() {
         v.todoIds = [];
         rerender();
       })),
-      field(t(v.mode === 'manual' ? 'manual.todos' : 'field.todo'), todos.length
-        ? checkList(todos.map((x) => ({ id: x.id, name: x.content, sub: x.dueAt != null ? formatDateTime(x.dueAt) : null })),
-          v.todoIds, (id) => { v.todoIds = toggled(v.todoIds, id); rerender(); })
+      field(t(v.mode === 'manual' ? 'manual.todos' : 'record.todoSet'), todos.length
+        ? (v.mode === 'manual'
+          // 手入力は終わった勉強なので、完了した todo を選ぶ
+          ? checkList(todos.map((x) => ({ id: x.id, name: x.content, sub: x.dueAt != null ? formatDateTime(x.dueAt) : null })),
+            v.todoIds, (id) => { v.todoIds = toggled(v.todoIds, id); rerender(); })
+          : todoPicker(todos, v.todoIds, (id) => { v.todoIds = toggled(v.todoIds, id); rerender(); }))
         : h('p', { class: 'muted small' }, t('record.noTodos')))),
     ...{ pomodoro: pomodoroPanel, stopwatch: stopwatchPanel, manual: manualPanel }[v.mode](),
   ];
+}
+
+// この勉強で完了したい todo を＋でセットする。セットしたものだけ記録中と終了画面に出る（REC-03）
+function todoPicker(todos, selected, onToggle) {
+  return h('div', { class: 'pick-list' }, todos.map((x) => {
+    const on = selected.includes(x.id);
+    return h('div', { class: `todo-pick ${on ? 'on' : ''} ${urgencyClass(x)}` },
+      h('span', { class: 'grow' },
+        h('span', { class: 'todo-content' }, x.content),
+        x.dueAt != null ? h('small', { class: 'sub block due' }, formatDateTime(x.dueAt)) : null),
+      h('button', {
+        type: 'button',
+        class: `icon-btn set-btn ${on ? 'on' : ''}`,
+        'aria-pressed': on ? 'true' : 'false',
+        'aria-label': `${t(on ? 'record.todoUnset' : 'record.todoSetOne')}: ${x.content}`,
+        onClick: () => onToggle(x.id),
+      }, icon(on ? 'check' : 'plus', { size: 20 })));
+  }));
 }
 
 function startButton(onClick, label = t('pomo.start')) {
