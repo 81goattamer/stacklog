@@ -1,2 +1,2 @@
 // アプリの版。公開するたびに上げる（画面と sw.js の両方がここを見る）
-self.APP_VERSION = '10';
+self.APP_VERSION = '11';

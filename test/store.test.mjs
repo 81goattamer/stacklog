@@ -378,3 +378,53 @@ test('exam favorite and square icon are saved and survive a backup', async () =>
   assert.equal(st.get('exams', id).favorite, false);
   assert.equal(st.get('exams', id).iconImage, null);
 });
+
+test('subject milestones: add, achieve, edit, delete, purge and backup', async () => {
+  const { st } = setup();
+  const sub = st.addSubject({ name: '英語' }).id;
+  assert.equal(st.addSubjectMilestone(sub, '  ').ok, false);
+  const a = st.addSubjectMilestone(sub, '単語帳1周').id;
+  const b = st.addSubjectMilestone(sub, '長文10題').id;
+  assert.deepEqual(st.state.milestones.map((m) => [m.subjectId, m.examId, m.sortOrder]), [[sub, null, 0], [sub, null, 1]]);
+  st.setSubjectMilestoneAchieved(a, '2026-11-04');
+  assert.equal(st.get('milestones', a).achievedDate, '2026-11-04');
+  st.setSubjectMilestoneAchieved(a, 'bad');
+  assert.equal(st.get('milestones', a).achievedDate, '2026-11-04');
+  assert.equal(st.updateSubjectMilestone(b, { content: '長文20題' }).ok, true);
+  assert.equal(st.get('milestones', b).content, '長文20題');
+
+  // 試験のマイルストーンは科目用の操作では変えない
+  const exam = st.saveExam({ name: 'TOEIC', hasScore: true, milestones: [{ content: '800' }] }).id;
+  const em = st.state.milestones.find((m) => m.examId === exam).id;
+  st.setSubjectMilestoneAchieved(em, '2026-11-04');
+  st.deleteSubjectMilestone(em);
+  assert.equal(st.get('milestones', em).achievedDate, null);
+  // 試験を保存し直しても科目のマイルストーンは残る
+  st.saveExam({ id: exam, name: 'TOEIC', hasScore: true, milestones: [] });
+  assert.equal(st.state.milestones.length, 2);
+
+  const back = st.parseBackup(JSON.stringify(await st.exportData()));
+  assert.deepEqual(back.milestones.map((m) => [m.subjectId, m.content, m.achievedDate]), [[sub, '単語帳1周', '2026-11-04'], [sub, '長文20題', null]]);
+
+  st.deleteSubjectMilestone(b);
+  assert.equal(st.get('milestones', b), null);
+  st.purgeSubject(sub);
+  assert.equal(st.state.milestones.length, 0);
+});
+
+test('backup drops subject milestones whose subject is gone', () => {
+  const { st } = setup();
+  const back = st.parseBackup(JSON.stringify({ app: 'Stacklog', schemaVersion: 1, data: {
+    subjects: [{ id: 's', name: 'a' }],
+    milestones: [{ id: 'm1', subjectId: 's', content: 'x', achievedDate: '2026-11-01' }, { id: 'm2', subjectId: 'gone', content: 'y' }],
+  } }));
+  assert.deepEqual(back.milestones.map((m) => [m.id, m.subjectId, m.examId, m.achievedDate]), [['m1', 's', null, '2026-11-01']]);
+});
+
+test('subject status and name are edited together', () => {
+  const { st } = setup();
+  const sub = st.addSubject({ name: '英語' }).id;
+  st.updateSubject(sub, { name: '英語長文', status: 'finished' });
+  assert.equal(st.get('subjects', sub).name, '英語長文');
+  assert.equal(st.get('subjects', sub).status, 'finished');
+});

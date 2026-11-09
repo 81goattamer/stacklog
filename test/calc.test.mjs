@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   GRAY, PALETTE, todoUrgency, addDays, calendarColors, categoryShares, computeSession, dayDiff, dayKey, defaultCategoryColor, examSchedule, examStudySeconds, isDateKey, overdueDays,
-  periodRange, sortTodos, streak, studySeries, studyShareText, timeAxisMax, todoBadge, visibleTodos, weekStartKey,
+  periodRange, sortTodos, streak, studySeries, studyShareText, timeAxisMax, timelineDays, todoBadge, visibleTodos, weekStartKey,
 } from '../js/calc.js';
 
 const at = (s) => new Date(s).getTime();
@@ -251,4 +251,25 @@ test('todo urgency: red within 24h or overdue, yellow within 72h, none when done
   assert.equal(todoUrgency(t(72.01), now), null);
   assert.equal(todoUrgency(t(1, { completedAt: now }), now), null);
   assert.equal(todoUrgency({ dueAt: null, completedAt: null }, now), null);
+});
+
+test('timeline groups records and completed todos by study day, newest first', () => {
+  const state = {
+    records: [
+      { id: 'r1', dayKey: '2026-11-03', startAt: at('2026-11-04T02:00:00'), studySeconds: 600 },
+      { id: 'r2', dayKey: '2026-11-04', startAt: at('2026-11-04T09:00:00'), studySeconds: 1200 },
+      { id: 'r3', dayKey: '2026-11-04', startAt: at('2026-11-04T20:00:00'), studySeconds: 300 },
+    ],
+    todos: [
+      { id: 't1', completedAt: at('2026-11-04T03:59:00') },
+      { id: 't2', completedAt: at('2026-11-04T12:00:00') },
+      { id: 't3', completedAt: null },
+      { id: 't4', completedAt: at('2026-11-06T10:00:00') },
+    ],
+  };
+  const days = timelineDays(state);
+  assert.deepEqual(days.map((d) => d.day), ['2026-11-06', '2026-11-04', '2026-11-03']);
+  assert.deepEqual(days.map((d) => d.studySeconds), [0, 1500, 600]);
+  assert.deepEqual(days[1].items.map((x) => x.row.id), ['r3', 't2', 'r2']);
+  assert.deepEqual(days[2].items.map((x) => `${x.type}:${x.row.id}`), ['todo:t1', 'record:r1']);
 });

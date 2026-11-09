@@ -6,6 +6,7 @@ import { h, icon, iconButton, actionMenu, blobUrl, colorDot, confirmDialog, empt
 import { pickImage } from './images.js';
 import { checkList, dateField, field, parseNumber, seg, switchRow, toggled } from './fields.js';
 import { lineChart } from './chart.js';
+import { openSubjectMilestones, subjectMilestones } from './subject.js';
 
 export function milestonesOf(examId) {
   return store.state.milestones.filter((m) => m.examId === examId).sort((a, b) => a.sortOrder - b.sortOrder);
@@ -379,11 +380,15 @@ export function openMilestoneList() {
     title: t('exam.gem'),
     full: true,
     render: () => {
-      const exams = store.state.exams.filter((e) => milestonesOf(e.id).length);
-      if (!exams.length) return empty(t('exam.noMilestones'), 'gem');
-      return h('div', {}, exams.map((e) => h('section', { class: 'group' },
-        h('h3', { class: 'group-label' }, e.name),
-        h('div', { class: 'card list outlined' }, orderMilestones(milestonesOf(e.id)).map((m) => milestoneRow(m, () => openExamDetail(e.id)))))));
+      // 試験のものを先に、続けて科目のものを出す
+      const groups = [
+        ...store.state.exams.map((e) => ({ name: e.name, list: milestonesOf(e.id), open: () => openExamDetail(e.id) })),
+        ...visibleSubjects(store.state).map((s) => ({ name: s.name, color: s.color, list: subjectMilestones(s.id), open: () => openSubjectMilestones(s.id) })),
+      ].filter((g) => g.list.length);
+      if (!groups.length) return empty(t('exam.noMilestones'), 'gem');
+      return h('div', {}, groups.map((g) => h('section', { class: 'group' },
+        h('h3', { class: 'group-label with-dot' }, g.color ? colorDot(g.color) : null, g.name),
+        h('div', { class: 'card list outlined' }, orderMilestones(g.list).map((m) => milestoneRow(m, g.open))))));
     },
   });
 }

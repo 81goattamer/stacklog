@@ -194,6 +194,24 @@ export function examStudySeconds(state, exam) {
   return sum;
 }
 
+// ---- タイムライン ----
+
+// 勉強の記録と完了した todo を、勉強日（午前4時区切り）ごとに新しい順でまとめる
+// 返す形: [{ day, studySeconds, items: [{ type: 'record' | 'todo', at, row }] }]
+export function timelineDays(state) {
+  const days = new Map();
+  const add = (day, item) => {
+    if (!days.has(day)) days.set(day, { day, studySeconds: 0, items: [] });
+    days.get(day).items.push(item);
+    return days.get(day);
+  };
+  for (const r of state.records) add(r.dayKey, { type: 'record', at: r.startAt, row: r }).studySeconds += r.studySeconds;
+  for (const t of state.todos) if (t.completedAt != null) add(dayKey(t.completedAt), { type: 'todo', at: t.completedAt, row: t });
+  const list = [...days.values()].sort((a, b) => (a.day < b.day ? 1 : a.day > b.day ? -1 : 0));
+  for (const d of list) d.items.sort((a, b) => b.at - a.at);
+  return list;
+}
+
 // ---- todo（4.5, 4.6） ----
 
 export function todoBadge(todos, now) {

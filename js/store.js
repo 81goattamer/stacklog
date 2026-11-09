@@ -150,14 +150,19 @@ export function sanitize(raw) {
     });
   });
 
+  // 試験のマイルストーンは examId、科目のマイルストーンは subjectId を持つ
   arr(raw.milestones).forEach((x, i) => {
-    if (!idOk(x?.id) || !str(x.content).trim() || !has('exams', x.examId)) return;
-    const attempt = s.examAttempts.find((a) => a.id === x.achievedAttemptId && a.examId === x.examId);
+    if (!idOk(x?.id) || !str(x.content).trim()) return;
+    const forExam = has('exams', x.examId);
+    if (!forExam && !has('subjects', x.subjectId)) return;
+    const attempt = forExam ? s.examAttempts.find((a) => a.id === x.achievedAttemptId && a.examId === x.examId) : null;
+    const achievedDate = forExam ? attempt?.date ?? null : isDateKey(x.achievedDate) ? x.achievedDate : null;
     s.milestones.push({
       id: x.id,
-      examId: x.examId,
+      examId: forExam ? x.examId : null,
+      subjectId: forExam ? null : x.subjectId,
       content: str(x.content).trim(),
-      achievedDate: attempt ? attempt.date : null,
+      achievedDate,
       achievedAttemptId: attempt ? attempt.id : null,
       sortOrder: Number.isFinite(x.sortOrder) ? x.sortOrder : i,
       ...common(x, i),
@@ -417,6 +422,7 @@ export class Store {
     const gone = new Set(st.todos.filter((x) => x.subjectId === id).map((x) => x.id));
     for (const tid of gone) this.remove('todos', tid);
     this.dropTodoLinks(gone);
+    for (const m of st.milestones.filter((x) => x.subjectId === id)) this.remove('milestones', m.id);
     for (const e of st.exams) {
       if (e.subjectIds.includes(id)) {
         e.subjectIds = e.subjectIds.filter((x) => x !== id);
@@ -699,7 +705,7 @@ export class Store {
         this.put('milestones', cur);
         keep.add(cur.id);
       } else {
-        const row = this.insert('milestones', { id: uid(), examId: exam.id, content, achievedDate: null, achievedAttemptId: null, sortOrder: order++ });
+        const row = this.insert('milestones', { id: uid(), examId: exam.id, subjectId: null, content, achievedDate: null, achievedAttemptId: null, sortOrder: order++ });
         keep.add(row.id);
       }
     }
@@ -800,6 +806,44 @@ export class Store {
       }
     }
     this.remove('examAttempts', id);
+    this.commit();
+  }
+
+  // ---- 科目のマイルストーン ----
+
+  addSubjectMilestone(subjectId, content) {
+    const c = String(content ?? '').trim();
+    if (!c) return { ok: false, error: 'required' };
+    if (!this.get('subjects', subjectId)) return { ok: false, error: 'missing' };
+    const order = this.state.milestones.filter((m) => m.subjectId === subjectId).reduce((n, m) => Math.max(n, m.sortOrder + 1), 0);
+    const row = this.insert('milestones', { id: uid(), examId: null, subjectId, content: c, achievedDate: null, achievedAttemptId: null, sortOrder: order });
+    this.commit();
+    return { ok: true, id: row.id };
+  }
+
+  updateSubjectMilestone(id, { content }) {
+    const m = this.get('milestones', id);
+    if (!m?.subjectId) return { ok: false, error: 'missing' };
+    const c = String(content ?? '').trim();
+    if (!c) return { ok: false, error: 'required' };
+    m.content = c;
+    this.put('milestones', m);
+    this.commit();
+    return { ok: true, id };
+  }
+
+  // date は達成した日（YYYY-MM-DD）。null で未達成に戻す
+  setSubjectMilestoneAchieved(id, date) {
+    const m = this.get('milestones', id);
+    if (!m?.subjectId || (date != null && !isDateKey(date))) return;
+    m.achievedDate = date;
+    this.put('milestones', m);
+    this.commit();
+  }
+
+  deleteSubjectMilestone(id) {
+    if (!this.get('milestones', id)?.subjectId) return;
+    this.remove('milestones', id);
     this.commit();
   }
 

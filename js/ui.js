@@ -221,6 +221,11 @@ export function formatDateTime(ms) {
   return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+export function formatClockTime(ms) {
+  const d = new Date(ms);
+  return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
 export function todayKey() {
   return dayKey(Date.now());
 }

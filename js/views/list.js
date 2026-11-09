@@ -81,7 +81,7 @@ function openDayDetail(key) {
       if (!records.length && !attempts.length) return h('p', { class: 'muted pad center' }, t('cal.noData'));
       return h('div', {},
         records.length ? h('p', { class: 'sub' }, t('data.total', { time: formatDuration(total) })) : null,
-        records.length ? h('div', { class: 'card list outlined' }, records.map(recordRow)) : null,
+        records.length ? h('div', { class: 'card list outlined' }, records.map((r) => recordRow(r))) : null,
         attempts.length ? h('div', { class: 'section-head' }, h('h3', {}, t('cal.dayExams'))) : null,
         attempts.length ? h('div', { class: 'card list outlined' }, attempts.map((a) => {
           const exam = store.get('exams', a.examId);

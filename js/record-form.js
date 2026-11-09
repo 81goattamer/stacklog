@@ -2,7 +2,7 @@ import { store, subjectName } from './app-store.js';
 import { sortByDue, studyShareText } from './calc.js';
 import { visibleSubjects } from './store.js';
 import { t } from './i18n.js';
-import { h, colorDot, iconButton, openSheet, confirmDialog, toast, formatDateTime, formatDuration } from './ui.js';
+import { h, colorDot, iconButton, openSheet, confirmDialog, toast, formatClockTime, formatDateTime, formatDuration } from './ui.js';
 import { checkList, datetimeField, durationField, field, memoField, selectField, toggled } from './fields.js';
 
 export function subjectColor(id) {
@@ -10,14 +10,16 @@ export function subjectColor(id) {
 }
 
 // 記録の1行。タップで編集・削除（POP-34）
-export function recordRow(rec) {
-  const todos = rec.todoIds.map((id) => store.get('todos', id)?.content).filter(Boolean);
+// timeOnly: 日付を出さず時刻だけ出す。skipTodo: todo の行に出さない todo を選ぶ
+export function recordRow(rec, { timeOnly = false, skipTodo = null } = {}) {
+  const todos = rec.todoIds.map((id) => store.get('todos', id)).filter((x) => x && !skipTodo?.(x)).map((x) => x.content);
   return h('button', { type: 'button', class: 'record-row', onClick: () => openRecordEdit(rec.id) },
     colorDot(subjectColor(rec.subjectId)),
     h('div', { class: 'grow' },
       h('div', { class: 'record-title' }, rec.subjectId ? subjectName(rec.subjectId) : t('subject.none')),
+      rec.memo ? h('div', { class: 'record-memo' }, rec.memo) : null,
       todos.length ? h('div', { class: 'sub' }, todos.join(' / ')) : null,
-      h('div', { class: 'sub' }, formatDateTime(rec.startAt))),
+      h('div', { class: 'sub' }, timeOnly ? formatClockTime(rec.startAt) : formatDateTime(rec.startAt))),
     h('span', { class: 'record-time' }, formatDuration(rec.studySeconds)));
 }
 
