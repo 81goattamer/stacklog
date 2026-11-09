@@ -134,6 +134,10 @@ input, select, textarea { font: inherit; color: inherit; }
   min-width: 0;
 }
 .input:focus { border-color: var(--accent); background: var(--card); }
+/* iOS Safari は日付の欄を独自の幅・高さで描き、width: 100% を無視してはみ出すので、標準の見た目を外す */
+.input:is([type="date"], [type="datetime-local"]) { -webkit-appearance: none; appearance: none; display: block; max-width: 100%; line-height: 22px; color: var(--text); }
+.input::-webkit-date-and-time-value { text-align: left; margin: 0; min-height: 22px; }
+.input::-webkit-datetime-edit { padding: 0; }
 .input.num { width: 76px; flex: none; text-align: right; appearance: textfield; }
 .input.num::-webkit-inner-spin-button, .input.num::-webkit-outer-spin-button { appearance: none; margin: 0; }
 select.input { appearance: auto; }
