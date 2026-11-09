@@ -48,4 +48,4 @@ ES モジュールと Service Worker を使うため、`index.html` をファイ
 | `js/i18n.js` | 日本語・英語の文言 |
 | `version.js` | アプリの版。公開するたびに上げる。上げると、開いている画面に「新しい版があります」が出る |
 | `sw.js` | オフライン用のキャッシュ。ファイルを追加したら `FILES` に足す |
-| `tools/make-icons.mjs` | アイコン PNG の生成 |
+| `tools/make-icons.py` | 元画像（`icons/source-*.png`）からアイコン PNG を生成（Pillow が必要） |
