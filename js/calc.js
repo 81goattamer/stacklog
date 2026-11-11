@@ -194,6 +194,13 @@ export function examStudySeconds(state, exam) {
   return sum;
 }
 
+// 前回の記録に使ったモード（最後に保存した記録のもの）。記録がなければポモドーロ
+export function lastRecordMode(records) {
+  let last = null;
+  for (const r of records) if (!last || (r.createdAt ?? 0) >= (last.createdAt ?? 0)) last = r;
+  return last?.mode ?? 'pomodoro';
+}
+
 // ---- タイムライン ----
 
 // 勉強の記録と完了した todo を、勉強日（午前4時区切り）ごとに新しい順でまとめる

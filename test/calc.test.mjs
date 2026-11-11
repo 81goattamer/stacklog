@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   GRAY, PALETTE, todoUrgency, addDays, calendarColors, categoryShares, computeSession, dayDiff, dayKey, defaultCategoryColor, examSchedule, examStudySeconds, isDateKey, overdueDays,
-  periodRange, sortTodos, streak, studySeries, studyShareText, timeAxisMax, timelineDays, todoBadge, visibleTodos, weekStartKey,
+  periodRange, sortTodos, streak, studySeries, studyShareText, timeAxisMax, timelineDays, lastRecordMode, todoBadge, visibleTodos, weekStartKey,
 } from '../js/calc.js';
 
 const at = (s) => new Date(s).getTime();
@@ -272,4 +272,13 @@ test('timeline groups records and completed todos by study day, newest first', (
   assert.deepEqual(days.map((d) => d.studySeconds), [0, 1500, 600]);
   assert.deepEqual(days[1].items.map((x) => x.row.id), ['r3', 't2', 'r2']);
   assert.deepEqual(days[2].items.map((x) => `${x.type}:${x.row.id}`), ['todo:t1', 'record:r1']);
+});
+
+test('record mode starts from the mode of the last saved record', () => {
+  assert.equal(lastRecordMode([]), 'pomodoro');
+  assert.equal(lastRecordMode([
+    { mode: 'manual', createdAt: 3, startAt: 1 },
+    { mode: 'stopwatch', createdAt: 5, startAt: 0 },
+    { mode: 'pomodoro', createdAt: 4, startAt: 9 },
+  ]), 'stopwatch');
 });

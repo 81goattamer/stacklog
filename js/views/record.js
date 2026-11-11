@@ -1,7 +1,7 @@
 // 記録の画面。記録中はタイマーの画面（session.js）、それ以外は1画面で
 // 上から 記録モード → 科目 → todo → モードごとの設定 を選んで始める
 import { store } from '../app-store.js';
-import { sortByDue } from '../calc.js';
+import { lastRecordMode, sortByDue } from '../calc.js';
 import { candidateTodos, visibleSubjects } from '../store.js';
 import { t } from '../i18n.js';
 import { h, icon, iconButton, closeAllSheets, formatDateTime, toast, setChildren } from '../ui.js';
@@ -11,10 +11,10 @@ import { urgencyClass } from '../todo-form.js';
 import { renderSession } from './session.js';
 
 const MODES = ['pomodoro', 'stopwatch', 'manual'];
-let lastMode = 'pomodoro';
 
 // pinnedSubjectId: 科目詳細から来たときの科目。「勉強中」でなくても選べるようにする
-const fresh = (subjectId = null) => ({ mode: lastMode, subjectId, pinnedSubjectId: subjectId, todoIds: [], pomo: null, manual: null, err: '' });
+// 最初に選ばれるモードは、前回の記録に使ったモード
+const fresh = (subjectId = null) => ({ mode: lastRecordMode(store.state.records), subjectId, pinnedSubjectId: subjectId, todoIds: [], pomo: null, manual: null, err: '' });
 let view = fresh();
 
 export function resetRecordView() {
@@ -63,7 +63,6 @@ function recordForm() {
       h('h1', { class: 'sub-title' }, t('record.title'))),
     seg(MODES.map((m) => [m, t(`mode.${m}`)]), v.mode, (m) => {
       v.mode = m;
-      lastMode = m;
       v.err = '';
       rerender();
     }, 'wide'),
