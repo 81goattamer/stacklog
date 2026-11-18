@@ -1,5 +1,5 @@
 import { store } from '../app-store.js';
-import { sortTodos, sortedCategories, visibleTodos } from '../calc.js';
+import { expiredTodos, sortTodos, sortedCategories, visibleTodos } from '../calc.js';
 import { t } from '../i18n.js';
 import { h, icon, colorDot, empty, setChildren } from '../ui.js';
 import { openTodoForm, todoRow } from '../todo-form.js';
@@ -34,6 +34,15 @@ function grouped(rows) {
   });
 }
 
+// 期限切れ課題（… から「期限切れ」にしたもの）は todo の一覧から外し、下にまとめて出す
+function expiredSection() {
+  const list = expiredTodos(store.state.todos);
+  if (!list.length) return null;
+  return h('section', { class: 'group expired-group' },
+    h('h2', { class: 'group-label' }, t('todo.expiredTitle', { n: list.length })),
+    h('div', { class: 'card list' }, list.map((x) => todoRow(x, { onToggle: null }))));
+}
+
 export function renderTodos(root) {
   const rows = sortTodos(store.state, visibleTodos(store.state.todos, view, Date.now()), view.sort);
   const chip = (label, on, onClick) => h('button', {
@@ -54,6 +63,7 @@ export function renderTodos(root) {
       : view.sort === 'category'
         ? h('div', {}, grouped(rows))
         : h('div', { class: 'card list' }, rows.map(rowOf)),
+    expiredSection(),
     h('div', { class: 'fab-space' }),
     // 追加ボタンは本棚の記録ボタンと同じ右下に置く
     h('button', {

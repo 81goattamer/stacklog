@@ -1,5 +1,5 @@
 import { store, subjectName } from './app-store.js';
-import { overdueDays, sortByDue, todoUrgency } from './calc.js';
+import { canExpire, overdueDays, sortByDue, todoUrgency } from './calc.js';
 import { visibleSubjects } from './store.js';
 import { t } from './i18n.js';
 import { h, icon, iconButton, openSheet, actionMenu, confirmDialog, formatDateTime } from './ui.js';
@@ -43,7 +43,11 @@ export function openTodoForm({ id = null, subjectId = null } = {}) {
 export function openTodoMenu(id) {
   const todo = store.get('todos', id);
   if (!todo) return;
+  const expired = todo.expiredAt != null;
   actionMenu(todo.content, [
+    // 締め切りを過ぎた未完了の todo は、期限切れ課題に移せる
+    canExpire(todo, Date.now()) ? { label: t('todo.expire'), icon: 'calendar', onClick: () => store.setTodoExpired(id, true) } : null,
+    expired ? { label: t('todo.unexpire'), icon: 'back', onClick: () => store.setTodoExpired(id, false) } : null,
     { label: t('common.edit'), icon: 'edit', onClick: () => openTodoForm({ id }) },
     {
       label: t('common.delete'),
@@ -53,7 +57,7 @@ export function openTodoMenu(id) {
         if (await confirmDialog({ message: t('todo.deleteConfirm', { name: todo.content }), okLabel: t('common.delete'), danger: true })) store.deleteTodo(id);
       },
     },
-  ]);
+  ].filter(Boolean));
 }
 
 // 締め切りの表示。期限切れは何日過ぎたかも出す（TODO-20）
@@ -74,9 +78,11 @@ export function urgencyClass(todo) {
 // todo の1行。onToggle で完了を切り替える。menu を付けると右端に … を出す
 export function todoRow(todo, { onToggle, menu = true, showSubject = true, extra = null }) {
   const done = todo.completedAt != null;
+  const expired = !done && todo.expiredAt != null;
   const name = showSubject && todo.subjectId ? subjectName(todo.subjectId) : '';
-  return h('div', { class: `todo-row ${done ? 'done' : ''} ${urgencyClass(todo)}` },
-    h('button', {
+  return h('div', { class: `todo-row ${done ? 'done' : ''} ${expired ? 'expired' : ''} ${urgencyClass(todo)}` },
+    // 期限切れ課題は完了にできないので、チェックの代わりに × の印を出す
+    expired ? h('span', { class: 'expired-mark', 'aria-hidden': 'true' }, icon('close', { size: 14 })) : h('button', {
       type: 'button',
       class: `check big ${done ? 'on' : ''}`,
       role: 'checkbox',

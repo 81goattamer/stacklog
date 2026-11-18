@@ -39,7 +39,7 @@ export function openRecordEdit(id) {
       if (current && !options.includes(current)) options.push(current);
       // 選べる todo: この記録に結びつくものと、未完了のもの（科目を選んだらその科目だけ）
       const todos = sortByDue(store.state.todos.filter((x) => f.todoIds.includes(x.id)
-        || (x.completedAt == null && (!f.subjectId || x.subjectId === f.subjectId))));
+        || (x.completedAt == null && x.expiredAt == null && (!f.subjectId || x.subjectId === f.subjectId))));
       return h('div', { class: 'form' },
         field(t('field.subject'), selectField(f.subjectId, options, t('subject.none'), (v) => { f.subjectId = v; sheet.refresh(); })),
         field(t('field.memo'), memoField(f.memo, (v) => { f.memo = v; })),

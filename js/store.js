@@ -91,6 +91,7 @@ export function sanitize(raw) {
       content: str(x.content).trim(),
       dueAt: ms(x.dueAt),
       completedAt: ms(x.completedAt),
+      expiredAt: ms(x.expiredAt),
       ...common(x, i),
     });
   });
@@ -460,7 +461,7 @@ export class Store {
   addTodo({ subjectId = null, content, dueAt = null }) {
     const c = String(content ?? '').trim();
     if (!c) return { ok: false, error: 'required' };
-    const row = this.insert('todos', { id: uid(), subjectId: this.get('subjects', subjectId) ? subjectId : null, content: c, dueAt, completedAt: null });
+    const row = this.insert('todos', { id: uid(), subjectId: this.get('subjects', subjectId) ? subjectId : null, content: c, dueAt, completedAt: null, expiredAt: null });
     this.commit();
     return { ok: true, id: row.id };
   }
@@ -480,6 +481,15 @@ export class Store {
     const t = this.get('todos', id);
     if (!t) return;
     t.completedAt = done ? this.now() : null;
+    this.put('todos', t);
+    this.commit();
+  }
+
+  // 期限切れ課題にする（todo の一覧から外す）・todo に戻す
+  setTodoExpired(id, expired) {
+    const t = this.get('todos', id);
+    if (!t || t.completedAt != null) return;
+    t.expiredAt = expired ? this.now() : null;
     this.put('todos', t);
     this.commit();
   }
@@ -913,5 +923,5 @@ export function visibleSubjects(state, status = null) {
 
 // 記録中・手入力で選べる todo（REC-03）。科目を選んだらその科目だけ、選ばなければすべて
 export function candidateTodos(state, subjectId) {
-  return state.todos.filter((t) => t.completedAt == null && (subjectId ? t.subjectId === subjectId : true));
+  return state.todos.filter((t) => t.completedAt == null && t.expiredAt == null && (subjectId ? t.subjectId === subjectId : true));
 }
