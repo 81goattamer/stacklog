@@ -234,6 +234,9 @@ const dict = {
     'todo.expire': '期限切れ',
     'todo.unexpire': 'todo に戻す',
     'todo.filterExpired': '期限切れ',
+    'dueAlert.title': '締め切りが近い todo',
+    'dueAlert.message': '24時間以内に締め切りの todo が{n}件あります。',
+    'dueAlert.hint': 'todo を押すとその todo がセットされた状態で、記録画面に移れます。',
 
     'settings.title': '設定',
     'settings.lang': '言語',
@@ -515,6 +518,9 @@ const dict = {
     'todo.expire': 'Mark as expired',
     'todo.unexpire': 'Back to to-dos',
     'todo.filterExpired': 'Expired',
+    'dueAlert.title': 'Due soon',
+    'dueAlert.message': '{n} to-do(s) due within 24 hours.',
+    'dueAlert.hint': 'Tap a to-do to open the record screen with it set.',
 
     'settings.title': 'Settings',
     'settings.lang': 'Language',

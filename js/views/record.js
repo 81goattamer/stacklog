@@ -35,6 +35,14 @@ export function recordFromSubject(subjectId) {
   goTab('record');
 }
 
+// 締め切りのお知らせから、その todo の科目と todo を選んだ状態で開く
+export function recordWithTodo(todo) {
+  closeAllSheets();
+  if (store.state.activeSession) toast(t('run.alreadyActive'));
+  else view = { ...fresh(todo.subjectId), todoIds: [todo.id] };
+  goTab('record');
+}
+
 let rootEl = null;
 function rerender() {
   renderRecord(rootEl);

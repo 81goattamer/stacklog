@@ -282,3 +282,21 @@ test('record mode starts from the mode of the last saved record', () => {
     { mode: 'pomodoro', createdAt: 4, startAt: 9 },
   ]), 'stopwatch');
 });
+
+test('due soon: open todos due within 24 hours, nearest first; remaining time as hh:mm', async () => {
+  const { dueSoonTodos, formatLeft } = await import('../js/calc.js');
+  const now = new Date('2026-11-19T12:00:00').getTime();
+  const H = 3600_000;
+  const todos = [
+    { id: 'a', dueAt: now + 4 * H, completedAt: null, expiredAt: null, createdAt: 1 },
+    { id: 'b', dueAt: now + 3 * H, completedAt: null, expiredAt: null, createdAt: 2 },
+    { id: 'late', dueAt: now - H, completedAt: null, expiredAt: null, createdAt: 3 },
+    { id: 'far', dueAt: now + 25 * H, completedAt: null, expiredAt: null, createdAt: 4 },
+    { id: 'done', dueAt: now + H, completedAt: now, expiredAt: null, createdAt: 5 },
+    { id: 'exp', dueAt: now + H, completedAt: null, expiredAt: now, createdAt: 6 },
+    { id: 'none', dueAt: null, completedAt: null, expiredAt: null, createdAt: 7 },
+  ];
+  assert.deepEqual(dueSoonTodos(todos, now).map((x) => x.id), ['b', 'a']);
+  assert.equal(formatLeft(2 * H + 56 * 60_000 + 30_000), '02:56');
+  assert.equal(formatLeft(-1000), '00:00');
+});

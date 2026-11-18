@@ -247,6 +247,17 @@ export function overdueDays(todo, now) {
   return dayDiff(dayKey(now), dayKey(todo.dueAt));
 }
 
+// 締め切りまで24時間以内（まだ過ぎていない）の未完了の todo。締め切りの近い順
+export function dueSoonTodos(todos, now) {
+  return sortByDue(todos.filter((t) => t.completedAt == null && t.expiredAt == null && t.dueAt != null && t.dueAt > now && t.dueAt - now <= 24 * HOUR));
+}
+
+// 締め切りまでの残り時間を「時:分」で出す（例: 02:56）
+export function formatLeft(ms) {
+  const m = Math.max(0, Math.floor(ms / 60000));
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
+
 // 期限切れ課題にできるか: 未完了で締め切りを過ぎたもの
 export function canExpire(todo, now) {
   return todo.completedAt == null && todo.expiredAt == null && todo.dueAt != null && todo.dueAt < now;

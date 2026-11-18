@@ -29,6 +29,7 @@ const FILES = [
   './js/streak.js',
   './js/subject.js',
   './js/todo-form.js',
+  './js/due-alert.js',
   './js/ui.js',
   './js/views/exams.js',
   './js/views/list.js',

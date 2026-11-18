@@ -11,6 +11,7 @@ import { renderTodos } from './views/todos.js';
 import { renderSettings } from './views/settings.js';
 import { renderExams } from './views/exams.js';
 import { renderTimeline } from './views/timeline.js';
+import { dueAlertOnLaunch } from './due-alert.js';
 import { clearTickers, openDraftDialog, sessionBanner, syncWakeLock, tickSession } from './views/session.js';
 
 // ナビの並びは左から 試験・todo・本棚・データ・タイムライン。記録は本棚の記録ボタン、設定は各画面の右上の歯車から開く
@@ -127,6 +128,8 @@ if (session && !hadDraft) current = 'record';
 store.syncSession();
 render();
 if (hadDraft) openDraftDialog();
+// 締め切りが24時間以内の todo のお知らせ。記録中なら記録が終わってから出す
+dueAlertOnLaunch();
 
 setInterval(() => {
   if (document.visibilityState === 'visible') tickSession();
