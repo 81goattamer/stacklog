@@ -1,12 +1,12 @@
 import { store } from '../app-store.js';
-import { expiredTodos, sortTodos, sortedCategories, visibleTodos } from '../calc.js';
+import { sortTodos, sortedCategories, visibleTodos } from '../calc.js';
 import { t } from '../i18n.js';
 import { h, icon, colorDot, empty, setChildren } from '../ui.js';
 import { openTodoForm, todoRow } from '../todo-form.js';
 import { settingsButton } from '../nav.js';
 import { streakBanner } from '../streak.js';
 
-const view = { sort: 'due', showOpen: true, showDone: false };
+const view = { sort: 'due', showOpen: true, showDone: false, showExpired: false };
 const SORTS = [['due', 'todo.sortDue'], ['category', 'todo.sortCategory'], ['newest', 'todo.sortNewest'], ['oldest', 'todo.sortOldest']];
 
 function rowOf(todo) {
@@ -34,15 +34,6 @@ function grouped(rows) {
   });
 }
 
-// 期限切れ課題（… から「期限切れ」にしたもの）は todo の一覧から外し、下にまとめて出す
-function expiredSection() {
-  const list = expiredTodos(store.state.todos);
-  if (!list.length) return null;
-  return h('section', { class: 'group expired-group' },
-    h('h2', { class: 'group-label' }, t('todo.expiredTitle', { n: list.length })),
-    h('div', { class: 'card list' }, list.map((x) => todoRow(x, { onToggle: null }))));
-}
-
 export function renderTodos(root) {
   const rows = sortTodos(store.state, visibleTodos(store.state.todos, view, Date.now()), view.sort);
   const chip = (label, on, onClick) => h('button', {
@@ -57,13 +48,14 @@ export function renderTodos(root) {
     h('div', { class: 'sort-bar' }, SORTS.map(([key, label]) => chip(t(label), view.sort === key, () => { view.sort = key; }))),
     h('div', { class: 'sort-bar filter' },
       chip(t('todo.filterOpen'), view.showOpen, () => { view.showOpen = !view.showOpen; }),
-      chip(t('todo.filterDone'), view.showDone, () => { view.showDone = !view.showDone; })),
+      chip(t('todo.filterDone'), view.showDone, () => { view.showDone = !view.showDone; }),
+      // 期限切れ課題（… から「期限切れ」にしたもの）は、選んだときだけ出す
+      chip(t('todo.filterExpired'), view.showExpired, () => { view.showExpired = !view.showExpired; })),
     !rows.length
       ? empty(t('todo.empty'), 'checklist')
       : view.sort === 'category'
         ? h('div', {}, grouped(rows))
         : h('div', { class: 'card list' }, rows.map(rowOf)),
-    expiredSection(),
     h('div', { class: 'fab-space' }),
     // 追加ボタンは本棚の記録ボタンと同じ右下に置く
     h('button', {

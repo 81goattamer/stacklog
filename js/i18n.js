@@ -233,7 +233,7 @@ const dict = {
     'todo.toggle': '完了を切り替え',
     'todo.expire': '期限切れ',
     'todo.unexpire': 'todo に戻す',
-    'todo.expiredTitle': '期限切れ課題（{n}）',
+    'todo.filterExpired': '期限切れ',
 
     'settings.title': '設定',
     'settings.lang': '言語',
@@ -514,7 +514,7 @@ const dict = {
     'todo.toggle': 'Toggle completion',
     'todo.expire': 'Mark as expired',
     'todo.unexpire': 'Back to to-dos',
-    'todo.expiredTitle': 'Expired ({n})',
+    'todo.filterExpired': 'Expired',
 
     'settings.title': 'Settings',
     'settings.lang': 'Language',

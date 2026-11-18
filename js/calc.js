@@ -252,16 +252,11 @@ export function canExpire(todo, now) {
   return todo.completedAt == null && todo.expiredAt == null && todo.dueAt != null && todo.dueAt < now;
 }
 
-// 期限切れ課題（締め切りの新しい順）
-export function expiredTodos(todos) {
-  return todos.filter((t) => t.expiredAt != null && t.completedAt == null).sort((a, b) => (b.dueAt ?? 0) - (a.dueAt ?? 0));
-}
-
-// showOpen: 未完了（今日完了したものは灰色で一緒に出す）、showDone: 完了済み。期限切れ課題は出さない
-export function visibleTodos(todos, { showOpen, showDone }, now) {
+// showOpen: 未完了（今日完了したものは灰色で一緒に出す）、showDone: 完了済み、showExpired: 期限切れ課題
+export function visibleTodos(todos, { showOpen, showDone, showExpired = false }, now) {
   const today = dayKey(now);
   return todos.filter((t) => {
-    if (t.expiredAt != null && t.completedAt == null) return false;
+    if (t.expiredAt != null && t.completedAt == null) return showExpired;
     if (t.completedAt == null) return showOpen;
     if (showDone) return true;
     return showOpen && dayKey(t.completedAt) === today;

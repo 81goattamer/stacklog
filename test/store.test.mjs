@@ -431,7 +431,7 @@ test('subject status and name are edited together', () => {
 
 test('expired todo leaves the todo list and candidates, and can come back', async () => {
   const { st, clock } = setup();
-  const { visibleTodos, expiredTodos, canExpire, todoBadge } = await import('../js/calc.js');
+  const { visibleTodos, canExpire, todoBadge } = await import('../js/calc.js');
   const late = st.addTodo({ content: 'late', dueAt: clock.t - 3600_000 }).id;
   const future = st.addTodo({ content: 'future', dueAt: clock.t + 3600_000 }).id;
   assert.equal(canExpire(st.get('todos', late), clock.t), true);
@@ -439,10 +439,10 @@ test('expired todo leaves the todo list and candidates, and can come back', asyn
   st.setTodoExpired(late, true);
   const view = { showOpen: true, showDone: true };
   assert.deepEqual(visibleTodos(st.state.todos, view, clock.t).map((x) => x.id), [future]);
-  assert.deepEqual(expiredTodos(st.state.todos).map((x) => x.id), [late]);
+  assert.deepEqual(visibleTodos(st.state.todos, { showOpen: false, showDone: false, showExpired: true }, clock.t).map((x) => x.id), [late]);
   assert.deepEqual(candidateTodos(st.state, null).map((x) => x.id), [future]);
   assert.equal(todoBadge(st.state.todos, clock.t).red, 1);
   st.setTodoExpired(late, false);
-  assert.equal(expiredTodos(st.state.todos).length, 0);
+  assert.equal(st.get('todos', late).expiredAt, null);
   assert.equal(visibleTodos(st.state.todos, view, clock.t).length, 2);
 });

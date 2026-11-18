@@ -60,10 +60,10 @@ export function openTodoMenu(id) {
   ].filter(Boolean));
 }
 
-// 締め切りの表示。期限切れは何日過ぎたかも出す（TODO-20）
+// 締め切りの表示。期限切れは何日過ぎたかも出す（TODO-20）。期限切れ課題は締め切りの日時だけを普通の色で出す
 export function dueLabel(todo) {
   if (todo.dueAt == null) return null;
-  const n = overdueDays(todo, Date.now());
+  const n = todo.expiredAt != null ? null : overdueDays(todo, Date.now());
   return h('span', { class: `due ${n != null ? 'over' : ''}` },
     formatDateTime(todo.dueAt),
     n != null ? ` · ${n > 0 ? t('todo.overdue', { n }) : t('todo.overdueToday')}` : null);
