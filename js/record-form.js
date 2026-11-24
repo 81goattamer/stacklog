@@ -1,6 +1,6 @@
 import { store, subjectName } from './app-store.js';
 import { sortByDue, studyShareText } from './calc.js';
-import { visibleSubjects } from './store.js';
+import { candidateMilestones, visibleSubjects } from './store.js';
 import { t } from './i18n.js';
 import { h, colorDot, iconButton, openSheet, confirmDialog, toast, formatClockTime, formatDateTime, formatDuration } from './ui.js';
 import { checkList, datetimeField, durationField, field, memoField, selectField, toggled } from './fields.js';
@@ -26,7 +26,7 @@ export function recordRow(rec, { timeOnly = false, skipTodo = null } = {}) {
 export function openRecordEdit(id) {
   const cur = store.get('records', id);
   if (!cur) return;
-  const f = { subjectId: cur.subjectId, todoIds: [...cur.todoIds], startAt: cur.startAt, studySeconds: cur.studySeconds, breakSeconds: cur.breakSeconds, memo: cur.memo ?? '' };
+  const f = { subjectId: cur.subjectId, todoIds: [...cur.todoIds], milestoneIds: [...(cur.milestoneIds ?? [])], startAt: cur.startAt, studySeconds: cur.studySeconds, breakSeconds: cur.breakSeconds, memo: cur.memo ?? '' };
   let err = '';
   const sheet = openSheet({
     title: t('edit.title'),
@@ -40,6 +40,11 @@ export function openRecordEdit(id) {
       // 選べる todo: この記録に結びつくものと、未完了のもの（科目を選んだらその科目だけ）
       const todos = sortByDue(store.state.todos.filter((x) => f.todoIds.includes(x.id)
         || (x.completedAt == null && x.expiredAt == null && (!f.subjectId || x.subjectId === f.subjectId))));
+      // 選べるマイルストーン: この記録に結びつくものと、未達成のもの
+      const milestones = [
+        ...f.milestoneIds.map((mid) => store.get('milestones', mid)).filter(Boolean),
+        ...candidateMilestones(store.state, f.subjectId).filter((m) => !f.milestoneIds.includes(m.id)),
+      ];
       return h('div', { class: 'form' },
         field(t('field.subject'), selectField(f.subjectId, options, t('subject.none'), (v) => { f.subjectId = v; sheet.refresh(); })),
         field(t('field.memo'), memoField(f.memo, (v) => { f.memo = v; })),
@@ -49,6 +54,9 @@ export function openRecordEdit(id) {
         field(t('field.todo'), todos.length
           ? checkList(todos.map((x) => ({ id: x.id, name: x.content })), f.todoIds, (tid) => { f.todoIds = toggled(f.todoIds, tid); sheet.refresh(); })
           : h('p', { class: 'muted small' }, t('record.noTodos'))),
+        milestones.length
+          ? field(t('field.milestone'), checkList(milestones.map((m) => ({ id: m.id, name: m.content })), f.milestoneIds, (mid) => { f.milestoneIds = toggled(f.milestoneIds, mid); sheet.refresh(); }))
+          : null,
         err ? h('p', { class: 'error' }, err) : null,
         h('button', {
           type: 'button',
@@ -78,13 +86,26 @@ export function openRecordEdit(id) {
 }
 
 // 記録を文章にして共有する。共有メニューがない環境ではコピーする
+// 共有する時点の状況で、セットした todo とマイルストーンを「進行中」「達成」に分ける
+function shareStatus(f) {
+  const progress = [];
+  const done = [];
+  for (const x of sortByDue((f.todoIds ?? []).map((id) => store.get('todos', id)).filter(Boolean))) (x.completedAt != null ? done : progress).push(x.content);
+  for (const m of (f.milestoneIds ?? []).map((id) => store.get('milestones', id)).filter(Boolean)) (m.achievedDate ? done : progress).push(m.content);
+  return { progress, done };
+}
+
 export async function shareRecord(f) {
   const text = studyShareText({
     subject: f.subjectId ? subjectName(f.subjectId) : t('subject.none'),
     startAt: f.startAt,
     studySeconds: f.studySeconds,
     memo: f.memo,
-  }, { title: t('share.title'), subject: t('field.subject'), start: t('field.startAt'), study: t('field.study'), sep: t('share.sep') });
+    ...shareStatus(f),
+  }, {
+    title: t('share.title'), subject: t('field.subject'), start: t('field.startAt'), study: t('field.study'), sep: t('share.sep'),
+    progress: t('share.progress'), done: t('share.done'), comment: t('share.comment'),
+  });
   if (navigator.share) {
     try {
       await navigator.share({ text });

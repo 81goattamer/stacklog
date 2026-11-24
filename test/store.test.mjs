@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Store, memoryRepo, recordsCsv, candidateTodos, visibleSubjects, dataUrlToBlob } from '../js/store.js';
+import { Store, memoryRepo, recordsCsv, candidateMilestones, candidateTodos, visibleSubjects, dataUrlToBlob } from '../js/store.js';
 import { GRAY, PALETTE } from '../js/calc.js';
 
 const at = (s) => new Date(s).getTime();
@@ -445,4 +445,33 @@ test('expired todo leaves the todo list and candidates, and can come back', asyn
   st.setTodoExpired(late, false);
   assert.equal(st.get('todos', late).expiredAt, null);
   assert.equal(visibleTodos(st.state.todos, view, clock.t).length, 2);
+});
+
+test('milestones set on a session: achieved during it, reverted on discard, saved with the record', () => {
+  const { st } = setup();
+  const s = st.addSubject({ name: '数学' }).id;
+  const m1 = st.addSubjectMilestone(s, '5章の内容の理解').id;
+  const m2 = st.addSubjectMilestone(s, '6章').id;
+  assert.deepEqual(candidateMilestones(st.state, s).map((m) => m.id), [m1, m2]);
+  st.startSession({ mode: 'stopwatch', subjectId: s, selectedMilestoneIds: [m1] });
+  st.toggleSessionMilestone(m2);
+  assert.equal(st.get('milestones', m2).achievedDate, '2026-11-04');
+  st.discardSession();
+  assert.equal(st.get('milestones', m2).achievedDate, null);
+  st.startSession({ mode: 'stopwatch', subjectId: s, selectedMilestoneIds: [m1] });
+  st.sessionEvent('stop');
+  st.toggleSessionMilestone(m2);
+  const id = st.saveSession().id;
+  assert.deepEqual(st.get('records', id).milestoneIds, [m1, m2]);
+  st.deleteSubjectMilestone(m1);
+  assert.deepEqual(st.get('records', id).milestoneIds, [m2]);
+});
+
+test('manual record with milestones marks them achieved', () => {
+  const { st } = setup();
+  const s = st.addSubject({ name: '数学' }).id;
+  const m = st.addSubjectMilestone(s, 'x').id;
+  st.addManualRecord({ subjectId: s, milestoneIds: [m], startAt: Date.now(), studySeconds: 600 });
+  assert.equal(st.get('milestones', m).achievedDate != null, true);
+  assert.equal(candidateMilestones(st.state, s).length, 0);
 });

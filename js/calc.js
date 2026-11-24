@@ -410,7 +410,8 @@ export function fromLocalInput(s) {
 }
 
 // 共有する文章。開始時刻は時:分、勉強時間は 時間:分（2桁ずつ）。勉強内容が空なら最後の行は付けない
-export function studyShareText({ subject, startAt, studySeconds, memo }, L) {
+// progress / done: セットした todo とマイルストーンのうち、まだのもの・終わったものの名前。ないときは見出しごと出さない
+export function studyShareText({ subject, startAt, studySeconds, memo, progress = [], done = [] }, L) {
   const d = new Date(startAt);
   const mins = Math.floor(studySeconds / 60);
   const lines = [
@@ -419,8 +420,10 @@ export function studyShareText({ subject, startAt, studySeconds, memo }, L) {
     `${L.start}${L.sep}${p2(d.getHours())}:${p2(d.getMinutes())}`,
     `${L.study}${L.sep}${p2(Math.floor(mins / 60))}:${p2(mins % 60)}`,
   ];
+  if (progress.length) lines.push(L.progress, ...progress.map((x) => `・${x}`));
+  if (done.length) lines.push(L.done, ...done.map((x) => `・${x}`));
   const text = String(memo ?? '').trim();
-  if (text) lines.push(text);
+  if (text) lines.push(L.comment, text);
   return lines.join('\n');
 }
 

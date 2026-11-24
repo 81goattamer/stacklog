@@ -156,17 +156,42 @@ function stopwatchScreen(a) {
   ];
 }
 
-// 記録中・終了画面の todo。丸で完了を切り替える
+// 記録中・終了画面の todo とマイルストーン。丸で完了、宝石の印で達成を切り替える
 function sessionTodoList(a) {
   const todos = sessionTodos(a);
-  if (!todos.length) return null;
-  return h('section', {},
-    h('div', { class: 'section-head' }, h('h3', {}, t('field.todo'))),
-    h('div', { class: 'card list' }, todos.map((x) => todoRow(x, {
-      onToggle: () => store.toggleSessionTodo(x.id),
-      menu: false,
-      showSubject: !(a.result ? a.result.subjectId : a.subjectId),
-    }))));
+  const milestones = sessionMilestones(a);
+  return [
+    todos.length ? h('section', {},
+      h('div', { class: 'section-head' }, h('h3', {}, t('field.todo'))),
+      h('div', { class: 'card list' }, todos.map((x) => todoRow(x, {
+        onToggle: () => store.toggleSessionTodo(x.id),
+        menu: false,
+        showSubject: !(a.result ? a.result.subjectId : a.subjectId),
+      })))) : null,
+    milestones.length ? h('section', {},
+      h('div', { class: 'section-head' }, h('h3', {}, t('field.milestone'))),
+      h('div', { class: 'card list' }, milestones.map((m) => sessionMilestoneRow(m)))) : null,
+  ];
+}
+
+// 画面に出すマイルストーン: 記録を始めるときにセットしたもの
+function sessionMilestones(a) {
+  const ids = new Set([...(a.selectedMilestoneIds ?? []), ...(a.result?.milestoneIds ?? [])]);
+  return [...ids].map((id) => store.get('milestones', id)).filter(Boolean);
+}
+
+function sessionMilestoneRow(m) {
+  const done = !!m.achievedDate;
+  return h('div', { class: `todo-row ${done ? 'done' : ''}` },
+    h('button', {
+      type: 'button',
+      class: `gem gem-btn ${done ? 'on' : ''}`,
+      role: 'checkbox',
+      'aria-checked': done ? 'true' : 'false',
+      'aria-label': `${t('exam.achieved')}: ${m.content}`,
+      onClick: () => store.toggleSessionMilestone(m.id),
+    }, icon('gem', { size: 20 })),
+    h('div', { class: 'grow todo-text' }, h('div', { class: 'todo-content' }, m.content)));
 }
 
 // ---- 終了画面 ----

@@ -224,9 +224,13 @@ test('stopwatch: running is study, paused is break', () => {
 });
 
 test('share text follows the requested format', () => {
-  const L = { title: '勉強記録', subject: '科目', start: '開始時刻', study: '勉強時間', sep: '　' };
+  const L = { title: '勉強記録', subject: '科目', start: '開始時刻', study: '勉強時間', sep: '　', progress: '進行中', done: '達成', comment: 'コメント' };
   const text = studyShareText({ subject: '微分積分学', startAt: at('2026-11-04T17:23:00'), studySeconds: 48 * 60 + 59, memo: '斉次方程式の解き方をパターン別で勉強した。\n' }, L);
-  assert.equal(text, '勉強記録\n科目　微分積分学\n開始時刻　17:23\n勉強時間　00:48\n斉次方程式の解き方をパターン別で勉強した。');
+  assert.equal(text, '勉強記録\n科目　微分積分学\n開始時刻　17:23\n勉強時間　00:48\nコメント\n斉次方程式の解き方をパターン別で勉強した。');
+  const withSet = studyShareText({ subject: '数学', startAt: at('2026-11-04T17:23:00'), studySeconds: 3600, memo: 'つかれた', progress: ['5章の内容の理解'], done: ['課題5'] }, L);
+  assert.equal(withSet, '勉強記録\n科目　数学\n開始時刻　17:23\n勉強時間　01:00\n進行中\n・5章の内容の理解\n達成\n・課題5\nコメント\nつかれた');
+  const onlyDone = studyShareText({ subject: '数学', startAt: at('2026-11-04T17:23:00'), studySeconds: 3600, memo: '', done: ['課題5'] }, L);
+  assert.equal(onlyDone, '勉強記録\n科目　数学\n開始時刻　17:23\n勉強時間　01:00\n達成\n・課題5');
   const noMemo = studyShareText({ subject: '英語', startAt: at('2026-11-04T09:05:00'), studySeconds: 125 * 60, memo: '  ' }, L);
   assert.equal(noMemo, '勉強記録\n科目　英語\n開始時刻　09:05\n勉強時間　02:05');
 });

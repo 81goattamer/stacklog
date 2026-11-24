@@ -103,6 +103,7 @@ export function sanitize(raw) {
       id: x.id,
       subjectId: has('subjects', x.subjectId) ? x.subjectId : null,
       todoIds: [...new Set(arr(x.todoIds).filter((t) => has('todos', t)))],
+      milestoneIds: arr(x.milestoneIds).filter((m) => typeof m === 'string'),
       mode: ['pomodoro', 'stopwatch', 'manual'].includes(x.mode) ? x.mode : 'manual',
       startAt: x.startAt,
       studySeconds: Math.round(x.studySeconds),
@@ -169,6 +170,8 @@ export function sanitize(raw) {
       ...common(x, i),
     });
   });
+  // 記録にセットした科目のマイルストーン（マイルストーンを読んだあとで確かめる）
+  for (const r of s.records) r.milestoneIds = [...new Set(r.milestoneIds.filter((id) => s.milestones.some((m) => m.id === id && m.subjectId)))];
   for (const a of s.examAttempts) {
     a.targetMilestoneIds = [...new Set(a.targetMilestoneIds.filter((id) => s.milestones.some((m) => m.id === id && m.examId === a.examId)))];
   }
@@ -251,6 +254,14 @@ export class Store {
       settings: { ...defaultSettings(), ...(t.settings?.[0] ?? {}) },
       activeSession: t.activeSession?.[0] ?? null,
     };
+    // マイルストーンのセットを入れる前のデータには、その欄がない
+    for (const r of this.state.records) r.milestoneIds ??= [];
+    const a = this.state.activeSession;
+    if (a) {
+      a.selectedMilestoneIds ??= [];
+      a.completedMilestoneIds ??= [];
+      if (a.result) a.result.milestoneIds ??= [];
+    }
   }
 
   subscribe(fn) {
@@ -423,7 +434,9 @@ export class Store {
     const gone = new Set(st.todos.filter((x) => x.subjectId === id).map((x) => x.id));
     for (const tid of gone) this.remove('todos', tid);
     this.dropTodoLinks(gone);
-    for (const m of st.milestones.filter((x) => x.subjectId === id)) this.remove('milestones', m.id);
+    const goneMs = new Set(st.milestones.filter((x) => x.subjectId === id).map((x) => x.id));
+    for (const mid of goneMs) this.remove('milestones', mid);
+    this.dropMilestoneLinks(goneMs);
     for (const e of st.exams) {
       if (e.subjectIds.includes(id)) {
         e.subjectIds = e.subjectIds.filter((x) => x !== id);
@@ -452,6 +465,22 @@ export class Store {
       a.selectedTodoIds = a.selectedTodoIds.filter((t) => !ids.has(t));
       a.completedTodoIds = a.completedTodoIds.filter((t) => !ids.has(t));
       if (a.result) a.result.todoIds = a.result.todoIds.filter((t) => !ids.has(t));
+      this.putSession();
+    }
+  }
+
+  dropMilestoneLinks(ids) {
+    for (const r of this.state.records) {
+      if (r.milestoneIds.some((m) => ids.has(m))) {
+        r.milestoneIds = r.milestoneIds.filter((m) => !ids.has(m));
+        this.put('records', r);
+      }
+    }
+    const a = this.state.activeSession;
+    if (a) {
+      a.selectedMilestoneIds = a.selectedMilestoneIds.filter((m) => !ids.has(m));
+      a.completedMilestoneIds = a.completedMilestoneIds.filter((m) => !ids.has(m));
+      if (a.result) a.result.milestoneIds = a.result.milestoneIds.filter((m) => !ids.has(m));
       this.putSession();
     }
   }
@@ -506,6 +535,7 @@ export class Store {
     return {
       subjectId: this.get('subjects', f.subjectId) ? f.subjectId : null,
       todoIds: [...new Set((f.todoIds ?? []).filter((id) => this.get('todos', id)))],
+      milestoneIds: [...new Set((f.milestoneIds ?? []).filter((id) => this.get('milestones', id)?.subjectId))],
       startAt: f.startAt,
       studySeconds: Math.max(0, Math.round(f.studySeconds)),
       breakSeconds: Math.max(0, Math.round(f.breakSeconds ?? 0)),
@@ -520,7 +550,7 @@ export class Store {
     return { ok: true };
   }
 
-  // 手入力（REC-30）。選んだ todo は完了にする
+  // 手入力（REC-30）。選んだ todo は完了に、マイルストーンは達成にする
   addManualRecord(f) {
     const v = this.validateRecord(f);
     if (!v.ok) return v;
@@ -531,6 +561,13 @@ export class Store {
       if (t.completedAt == null) {
         t.completedAt = this.now();
         this.put('todos', t);
+      }
+    }
+    for (const id of row.milestoneIds) {
+      const m = this.get('milestones', id);
+      if (!m.achievedDate) {
+        m.achievedDate = dayKey(this.now());
+        this.put('milestones', m);
       }
     }
     this.commit();
@@ -560,7 +597,7 @@ export class Store {
     this.pending.push({ type: 'put', table: 'activeSession', row: this.state.activeSession });
   }
 
-  startSession({ mode, subjectId = null, selectedTodoIds = [], pomodoro = null }) {
+  startSession({ mode, subjectId = null, selectedTodoIds = [], selectedMilestoneIds = [], pomodoro = null }) {
     if (this.state.activeSession) return { ok: false, error: 'active' };
     this.state.activeSession = {
       id: SESSION_ID,
@@ -569,6 +606,8 @@ export class Store {
       subjectId,
       selectedTodoIds: [...selectedTodoIds],
       completedTodoIds: [],
+      selectedMilestoneIds: [...selectedMilestoneIds],
+      completedMilestoneIds: [],
       pomodoro,
       events: [{ type: 'start', at: this.now() }],
       result: null,
@@ -609,6 +648,7 @@ export class Store {
     a.result = {
       subjectId: a.subjectId,
       todoIds: [...new Set([...a.selectedTodoIds, ...a.completedTodoIds])],
+      milestoneIds: [...new Set([...a.selectedMilestoneIds, ...a.completedMilestoneIds])],
       startAt: c.startAt,
       studySeconds: Math.round(c.studyMs / 1000),
       breakSeconds: Math.round(c.breakMs / 1000),
@@ -632,6 +672,24 @@ export class Store {
       a.completedTodoIds = a.completedTodoIds.filter((x) => x !== id);
     }
     this.put('todos', t);
+    this.putSession();
+    this.commit();
+  }
+
+  // 記録中にマイルストーンの達成を切り替える。ここで達成にしたものは破棄で元に戻す
+  toggleSessionMilestone(id) {
+    const a = this.state.activeSession;
+    const m = this.get('milestones', id);
+    if (!a || !m?.subjectId) return;
+    if (!m.achievedDate) {
+      m.achievedDate = dayKey(this.now());
+      if (!a.completedMilestoneIds.includes(id)) a.completedMilestoneIds.push(id);
+      if (a.result && !a.result.milestoneIds.includes(id)) a.result.milestoneIds.push(id);
+    } else {
+      m.achievedDate = null;
+      a.completedMilestoneIds = a.completedMilestoneIds.filter((x) => x !== id);
+    }
+    this.put('milestones', m);
     this.putSession();
     this.commit();
   }
@@ -664,6 +722,13 @@ export class Store {
       if (t) {
         t.completedAt = null;
         this.put('todos', t);
+      }
+    }
+    for (const id of a.completedMilestoneIds) {
+      const m = this.get('milestones', id);
+      if (m) {
+        m.achievedDate = null;
+        this.put('milestones', m);
       }
     }
     this.clearSession();
@@ -854,6 +919,7 @@ export class Store {
   deleteSubjectMilestone(id) {
     if (!this.get('milestones', id)?.subjectId) return;
     this.remove('milestones', id);
+    this.dropMilestoneLinks(new Set([id]));
     this.commit();
   }
 
@@ -922,6 +988,12 @@ export function visibleSubjects(state, status = null) {
 }
 
 // 記録中・手入力で選べる todo（REC-03）。科目を選んだらその科目だけ、選ばなければすべて
+// 記録にセットできる科目のマイルストーン: 未達成のもの（科目を選んだらその科目だけ）。科目ごとの並び順
+export function candidateMilestones(state, subjectId) {
+  return state.milestones.filter((m) => m.subjectId && !m.achievedDate && (subjectId ? m.subjectId === subjectId : true))
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
 export function candidateTodos(state, subjectId) {
   return state.todos.filter((t) => t.completedAt == null && t.expiredAt == null && (subjectId ? t.subjectId === subjectId : true));
 }

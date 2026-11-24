@@ -1,8 +1,8 @@
 // 記録の画面。記録中はタイマーの画面（session.js）、それ以外は1画面で
 // 上から 記録モード → 科目 → todo → モードごとの設定 を選んで始める
-import { store } from '../app-store.js';
+import { store, subjectName } from '../app-store.js';
 import { lastRecordMode, sortByDue } from '../calc.js';
-import { candidateTodos, visibleSubjects } from '../store.js';
+import { candidateMilestones, candidateTodos, visibleSubjects } from '../store.js';
 import { t } from '../i18n.js';
 import { h, icon, iconButton, closeAllSheets, formatDateTime, toast, setChildren } from '../ui.js';
 import { checkList, datetimeField, durationField, field, selectField, seg, toggled } from '../fields.js';
@@ -14,7 +14,7 @@ const MODES = ['pomodoro', 'stopwatch', 'manual'];
 
 // pinnedSubjectId: 科目詳細から来たときの科目。「勉強中」でなくても選べるようにする
 // 最初に選ばれるモードは、前回の記録に使ったモード
-const fresh = (subjectId = null) => ({ mode: lastRecordMode(store.state.records), subjectId, pinnedSubjectId: subjectId, todoIds: [], pomo: null, manual: null, err: '' });
+const fresh = (subjectId = null) => ({ mode: lastRecordMode(store.state.records), subjectId, pinnedSubjectId: subjectId, todoIds: [], milestoneIds: [], pomo: null, manual: null, err: '' });
 let view = fresh();
 
 export function resetRecordView() {
@@ -65,6 +65,9 @@ function recordForm() {
   if (pinned && pinned.hiddenAt == null && !subjects.includes(pinned)) subjects.push(pinned);
   const todos = sortByDue(candidateTodos(store.state, v.subjectId));
   v.todoIds = v.todoIds.filter((id) => todos.some((x) => x.id === id));
+  const milestones = candidateMilestones(store.state, v.subjectId);
+  v.milestoneIds = v.milestoneIds.filter((id) => milestones.some((m) => m.id === id));
+  const showSubjectOfMs = !v.subjectId;
   return [
     h('header', { class: 'page-head' },
       iconButton('back', t('common.back'), () => goTab('shelf')),
@@ -78,6 +81,7 @@ function recordForm() {
       field(t('field.subject'), selectField(v.subjectId, subjects, t('subject.none'), (id) => {
         v.subjectId = id;
         v.todoIds = [];
+        v.milestoneIds = [];
         rerender();
       })),
       field(t(v.mode === 'manual' ? 'manual.todos' : 'record.todoSet'), todos.length
@@ -86,7 +90,14 @@ function recordForm() {
           ? checkList(todos.map((x) => ({ id: x.id, name: x.content, sub: x.dueAt != null ? formatDateTime(x.dueAt) : null })),
             v.todoIds, (id) => { v.todoIds = toggled(v.todoIds, id); rerender(); })
           : todoPicker(todos, v.todoIds, (id) => { v.todoIds = toggled(v.todoIds, id); rerender(); }))
-        : h('p', { class: 'muted small' }, t('record.noTodos')))),
+        : h('p', { class: 'muted small' }, t('record.noTodos'))),
+      // 未達成のマイルストーンがあるときだけ出す。手入力は達成したもの、それ以外はこの勉強で達成したいものを選ぶ
+      milestones.length
+        ? field(t(v.mode === 'manual' ? 'manual.milestones' : 'record.milestoneSet'), v.mode === 'manual'
+          ? checkList(milestones.map((m) => ({ id: m.id, name: m.content, sub: showSubjectOfMs ? subjectName(m.subjectId) : null })),
+            v.milestoneIds, (id) => { v.milestoneIds = toggled(v.milestoneIds, id); rerender(); })
+          : milestonePicker(milestones, v.milestoneIds, showSubjectOfMs, (id) => { v.milestoneIds = toggled(v.milestoneIds, id); rerender(); }))
+        : null),
     ...{ pomodoro: pomodoroPanel, stopwatch: stopwatchPanel, manual: manualPanel }[v.mode](),
   ];
 }
@@ -105,6 +116,25 @@ function todoPicker(todos, selected, onToggle) {
         'aria-pressed': on ? 'true' : 'false',
         'aria-label': `${t(on ? 'record.todoUnset' : 'record.todoSetOne')}: ${x.content}`,
         onClick: () => onToggle(x.id),
+      }, icon(on ? 'check' : 'plus', { size: 20 })));
+  }));
+}
+
+// この勉強で達成したいマイルストーンを＋でセットする。todo と同じ形
+function milestonePicker(list, selected, showSubject, onToggle) {
+  return h('div', { class: 'pick-list' }, list.map((m) => {
+    const on = selected.includes(m.id);
+    return h('div', { class: `todo-pick ${on ? 'on' : ''}` },
+      h('span', { class: 'gem' }, icon('gem', { size: 16 })),
+      h('span', { class: 'grow' },
+        h('span', { class: 'todo-content' }, m.content),
+        showSubject ? h('small', { class: 'sub block' }, subjectName(m.subjectId)) : null),
+      h('button', {
+        type: 'button',
+        class: `icon-btn set-btn ${on ? 'on' : ''}`,
+        'aria-pressed': on ? 'true' : 'false',
+        'aria-label': `${t(on ? 'record.todoUnset' : 'record.todoSetOne')}: ${m.content}`,
+        onClick: () => onToggle(m.id),
       }, icon(on ? 'check' : 'plus', { size: 20 })));
   }));
 }
@@ -143,7 +173,7 @@ function pomodoroPanel() {
         rerender();
         return;
       }
-      const next = { subjectId: view.subjectId, selectedTodoIds: view.todoIds };
+      const next = { subjectId: view.subjectId, selectedTodoIds: view.todoIds, selectedMilestoneIds: view.milestoneIds };
       view = fresh();
       store.startSession({ mode: 'pomodoro', ...next, pomodoro: f });
     }),
@@ -153,7 +183,7 @@ function pomodoroPanel() {
 function stopwatchPanel() {
   return [
     startButton(() => {
-      const next = { subjectId: view.subjectId, selectedTodoIds: view.todoIds };
+      const next = { subjectId: view.subjectId, selectedTodoIds: view.todoIds, selectedMilestoneIds: view.milestoneIds };
       view = fresh();
       store.startSession({ mode: 'stopwatch', ...next });
     }),
@@ -190,7 +220,7 @@ function manualPanel() {
           rerender();
           return;
         }
-        const payload = { subjectId: view.subjectId, todoIds: view.todoIds, startAt: f.startAt, studySeconds: f.studySeconds, breakSeconds: 0 };
+        const payload = { subjectId: view.subjectId, todoIds: view.todoIds, milestoneIds: view.milestoneIds, startAt: f.startAt, studySeconds: f.studySeconds, breakSeconds: 0 };
         view = fresh();
         store.addManualRecord(payload);
         goTab('shelf');
