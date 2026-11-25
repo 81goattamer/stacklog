@@ -1,7 +1,7 @@
 import { store } from './app-store.js';
 import { GRAY, defaultCategoryColor, sortedCategories, visibleTodos } from './calc.js';
 import { t } from './i18n.js';
-import { h, icon, iconButton, achieveButton, actionMenu, blobUrl, bookMark, colorDot, confirmDialog, formatDate, formatDuration, openSheet, subjectCover, toast, todayKey } from './ui.js';
+import { h, icon, iconButton, achieveButton, actionMenu, blobUrl, bookMark, colorDot, confirmDialog, confirmUnachieve, formatDate, formatDuration, openSheet, subjectCover, toast, todayKey } from './ui.js';
 import { colorSwatches, dateField, field, selectField, seg } from './fields.js';
 import { orderMilestones } from './exam.js';
 import { pickImage } from './images.js';
@@ -125,7 +125,7 @@ export function subjectMilestones(subjectId) {
   return store.state.milestones.filter((m) => m.subjectId === subjectId).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-// 宝石か達成ボタンを押すと今日の日付で達成になり、もう一度押すと未達成に戻る
+// 宝石か達成ボタンを押すと今日の日付で達成になり、もう一度押すと、確かめてから未達成に戻す
 export function openSubjectMilestones(subjectId) {
   let draft = '';
   const sheet = openSheet({
@@ -167,7 +167,9 @@ export function openSubjectMilestones(subjectId) {
 
 function subjectMilestoneRow(m) {
   const done = !!m.achievedDate;
-  const toggle = () => store.setSubjectMilestoneAchieved(m.id, done ? null : todayKey());
+  const toggle = async () => {
+    if (await confirmUnachieve(m)) store.setSubjectMilestoneAchieved(m.id, done ? null : todayKey());
+  };
   return h('div', { class: 'list-row milestone-row' },
     h('button', {
       type: 'button',

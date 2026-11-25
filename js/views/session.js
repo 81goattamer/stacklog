@@ -3,7 +3,7 @@ import { store, subjectName } from '../app-store.js';
 import { computeSession, formatClock, sortByDue } from '../calc.js';
 import { visibleSubjects } from '../store.js';
 import { t } from '../i18n.js';
-import { h, icon, iconButton, achieveButton, actionMenu, confirmDialog, formatDate, formatDuration, toast, setChildren } from '../ui.js';
+import { h, icon, iconButton, achieveButton, actionMenu, confirmDialog, confirmUnachieve, formatDate, formatDuration, toast, setChildren } from '../ui.js';
 import { datetimeField, durationField, field, memoField, selectField } from '../fields.js';
 import { goTab } from '../nav.js';
 import { todoRow } from '../todo-form.js';
@@ -180,13 +180,15 @@ function sessionMilestones(a) {
   return [...ids].map((id) => store.get('milestones', id)).filter(Boolean);
 }
 
-// 「達成」を押すとその日が達成日になる。もう一度押すと未達成に戻る
+// 「達成」を押すとその日が達成日になる。もう一度押すと、確かめてから未達成に戻す
 function sessionMilestoneRow(m) {
   const done = !!m.achievedDate;
   return h('div', { class: 'list-row milestone-row session-milestone' },
     h('span', { class: `gem ${done ? 'on' : ''}` }, icon('gem', { size: 20 })),
     h('span', { class: 'grow' }, m.content, done ? h('small', { class: 'sub block' }, t('exam.achievedOn', { date: formatDate(m.achievedDate) })) : null),
-    achieveButton(m, () => store.toggleSessionMilestone(m.id)));
+    achieveButton(m, async () => {
+      if (await confirmUnachieve(m)) store.toggleSessionMilestone(m.id);
+    }));
 }
 
 // ---- 終了画面 ----

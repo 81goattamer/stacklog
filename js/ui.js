@@ -278,6 +278,16 @@ export function achieveButton(m, onClick) {
   }, done ? icon('check', { size: 14 }) : null, t('milestone.achieve'));
 }
 
+// 達成を解除すると達成日が消えるので、解除する前に確かめる。解除してよければ true（未達成のものは聞かない）
+export async function confirmUnachieve(m) {
+  if (!m.achievedDate) return true;
+  return confirmDialog({
+    message: t('milestone.undoConfirm', { name: m.content, date: formatDate(m.achievedDate) }),
+    okLabel: t('milestone.undo'),
+    danger: true,
+  });
+}
+
 export function colorDot(color) {
   return h('span', { class: 'dot', style: { background: color } });
 }
