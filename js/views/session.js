@@ -3,7 +3,7 @@ import { store, subjectName } from '../app-store.js';
 import { computeSession, formatClock, sortByDue } from '../calc.js';
 import { visibleSubjects } from '../store.js';
 import { t } from '../i18n.js';
-import { h, icon, iconButton, actionMenu, confirmDialog, formatDuration, toast, setChildren } from '../ui.js';
+import { h, icon, iconButton, achieveButton, actionMenu, confirmDialog, formatDate, formatDuration, toast, setChildren } from '../ui.js';
 import { datetimeField, durationField, field, memoField, selectField } from '../fields.js';
 import { goTab } from '../nav.js';
 import { todoRow } from '../todo-form.js';
@@ -156,7 +156,7 @@ function stopwatchScreen(a) {
   ];
 }
 
-// 記録中・終了画面の todo とマイルストーン。丸で完了、宝石の印で達成を切り替える
+// 記録中・終了画面の todo とマイルストーン。丸で完了、達成ボタンで達成を切り替える
 function sessionTodoList(a) {
   const todos = sessionTodos(a);
   const milestones = sessionMilestones(a);
@@ -180,18 +180,13 @@ function sessionMilestones(a) {
   return [...ids].map((id) => store.get('milestones', id)).filter(Boolean);
 }
 
+// 「達成」を押すとその日が達成日になる。もう一度押すと未達成に戻る
 function sessionMilestoneRow(m) {
   const done = !!m.achievedDate;
-  return h('div', { class: `todo-row ${done ? 'done' : ''}` },
-    h('button', {
-      type: 'button',
-      class: `gem gem-btn ${done ? 'on' : ''}`,
-      role: 'checkbox',
-      'aria-checked': done ? 'true' : 'false',
-      'aria-label': `${t('exam.achieved')}: ${m.content}`,
-      onClick: () => store.toggleSessionMilestone(m.id),
-    }, icon('gem', { size: 20 })),
-    h('div', { class: 'grow todo-text' }, h('div', { class: 'todo-content' }, m.content)));
+  return h('div', { class: 'list-row milestone-row session-milestone' },
+    h('span', { class: `gem ${done ? 'on' : ''}` }, icon('gem', { size: 20 })),
+    h('span', { class: 'grow' }, m.content, done ? h('small', { class: 'sub block' }, t('exam.achievedOn', { date: formatDate(m.achievedDate) })) : null),
+    achieveButton(m, () => store.toggleSessionMilestone(m.id)));
 }
 
 // ---- 終了画面 ----

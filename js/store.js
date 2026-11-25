@@ -566,7 +566,8 @@ export class Store {
     for (const id of row.milestoneIds) {
       const m = this.get('milestones', id);
       if (!m.achievedDate) {
-        m.achievedDate = dayKey(this.now());
+        // 試験の受験日と同じく、勉強した日を達成日にする
+        m.achievedDate = row.dayKey;
         this.put('milestones', m);
       }
     }

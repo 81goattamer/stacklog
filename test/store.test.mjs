@@ -471,7 +471,8 @@ test('manual record with milestones marks them achieved', () => {
   const { st } = setup();
   const s = st.addSubject({ name: '数学' }).id;
   const m = st.addSubjectMilestone(s, 'x').id;
-  st.addManualRecord({ subjectId: s, milestoneIds: [m], startAt: Date.now(), studySeconds: 600 });
-  assert.equal(st.get('milestones', m).achievedDate != null, true);
+  st.addManualRecord({ subjectId: s, milestoneIds: [m], startAt: at('2026-11-02T20:00:00'), studySeconds: 600 });
+  // 入力した日（11/4）ではなく、勉強した日が達成日になる
+  assert.equal(st.get('milestones', m).achievedDate, '2026-11-02');
   assert.equal(candidateMilestones(st.state, s).length, 0);
 });

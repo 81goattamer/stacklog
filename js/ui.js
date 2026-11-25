@@ -266,6 +266,18 @@ export function subjectCover(subject, cls = '', size = 40) {
       : bookMark(subject.color, size));
 }
 
+// マイルストーンの達成ボタン。押すたびに達成と未達成を切り替える
+export function achieveButton(m, onClick) {
+  const done = !!m.achievedDate;
+  return h('button', {
+    type: 'button',
+    class: `achieve-btn ${done ? 'on' : ''}`,
+    'aria-pressed': done ? 'true' : 'false',
+    'aria-label': `${t('milestone.achieve')}: ${m.content}`,
+    onClick,
+  }, done ? icon('check', { size: 14 }) : null, t('milestone.achieve'));
+}
+
 export function colorDot(color) {
   return h('span', { class: 'dot', style: { background: color } });
 }

@@ -376,6 +376,9 @@ textarea.input { resize: vertical; min-height: 84px; line-height: 1.5; }
 .gem.on { color: var(--accent); }
 .gem-btn { width: 40px; height: 40px; margin: -8px -4px -8px -8px; align-items: center; justify-content: center; border-radius: 50%; }
 .milestone-row { padding-right: 4px; }
+.session-milestone { padding-right: 12px; }
+.achieve-btn { flex: none; display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); font-size: 14px; font-weight: 600; white-space: nowrap; }
+.achieve-btn.on { background: var(--accent); color: var(--accent-text); }
 .milestone-for { margin: 4px 4px 12px; }
 .milestone-add { margin-top: 12px; }
 .milestone-add .btn { flex: none; white-space: nowrap; }
